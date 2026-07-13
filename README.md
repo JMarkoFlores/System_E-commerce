@@ -3,7 +3,7 @@
 Tienda e-commerce con sistema de recomendación basado en Inteligencia Artificial. El proyecto está dividido en dos áreas:
 
 - **Área Cliente:** catálogo de productos, recomendaciones con IA, carrito de compras, historial de compras y pasarela de pago simulada.
-- **Área Administrador:** dashboard con KPIs, gestión de productos, gestión de usuarios, gráficas, métricas de IA, reportes operacionales/de gestión y módulo de pruebas.
+- **Área Administrador:** dashboard con KPIs, gestión de productos, gestión de usuarios, gráficas, métricas de IA, reportes operacionales/de gestión y módulo de pruebas estadísticas robustas del modelo de IA.
 
 ---
 
@@ -199,16 +199,22 @@ Tienda_E-Commerce/
 │   │       ├── AdminUsuarios.jsx
 │   │       ├── AdminGraficas.jsx
 │   │       ├── AdminMetricas.jsx
-│   │       ├── AdminReportes.jsx
-│   │       └── AdminPruebas.jsx
+│   │   ├── AdminReportes.jsx
+│   │   └── AdminPruebas.jsx       # Pruebas estadísticas del modelo de IA
 │   └── utils/
 │       ├── productos.js           # Catálogo local + emojis (usado por IA)
-│       └── RedNeuronal.js         # Red neuronal TensorFlow.js
+│       ├── RedNeuronal.js         # Red neuronal TensorFlow.js
+│       ├── RedNeuronalWrapper.js  # Adaptador para evaluación
+│       ├── datosPrueba.js         # Generación de datos sintéticos
+│       ├── EvaluacionModelo.js    # Métricas de recomendación
+│       ├── baselines.js           # Modelos baseline
+│       └── testsEstadisticos.js   # Tests estadísticos
 ├── index.html
 ├── package.json
 ├── vite.config.js
 ├── tailwind.config.js
-└── README.md
+├── README.md
+└── PruebaRobusta.md               # Documento de pruebas estadísticas robustas
 ```
 
 ---
@@ -229,6 +235,53 @@ Capa Densa (16 neuronas, ReLU) → Capa de Salida (1 neurona, Sigmoid)
 - **Entrenamiento:** 20 épocas, batch size 32
 
 > **Nota:** El modelo no se persiste entre sesiones; se entrena desde cero en cada sesión del navegador.
+
+---
+
+## 🧪 Pruebas Robustas del Modelo de IA
+
+El proyecto incluye un módulo completo de evaluación estadística del modelo de recomendación, accesible desde **Administrador > Pruebas**.
+
+### ¿Por qué pruebas robustas?
+
+Para validar que la Red Neuronal realmente aprende patrones útiles, se compara contra modelos baseline simples y se aplican tests estadísticos que miden la significancia de las diferencias.
+
+### Flujo de evaluación
+
+1. **Generación de datos sintéticos:** se crean usuarios ficticios con perfiles de preferencias realistas.
+2. **División train/test temporal:** las compras de cada usuario se dividen cronológicamente en 80% entrenamiento y 20% prueba.
+3. **Entrenamiento independiente:** la Red Neuronal se reinicia y entrena para cada usuario, evitando data leakage.
+4. **Comparación con baselines:** se evalúan cuatro modelos de referencia:
+   - Random
+   - Popularidad
+   - Content-Based (similitud coseno)
+   - Categoría Favorita
+5. **Tests estadísticos:** se aplican t-test pareado, Wilcoxon signed-rank y Cohen's d.
+6. **Intervalos de confianza:** se calculan IC 95% por bootstrap para cada métrica.
+
+### Métricas calculadas
+
+- **Hit Rate@K** — % de usuarios con al menos un acierto en top-K
+- **Precision@K** — % de recomendaciones correctas en top-K
+- **Recall@K** — % de compras de test recuperadas en top-K
+- **F1@K** — balance entre precision y recall
+- **MRR** — ranking inverso medio del primer acierto
+- **MAP** — mean average precision
+- **NDCG@K** — calidad del ranking considerando posiciones
+- **Coverage** — % del catálogo recomendado
+- **Diversity** — variedad de categorías
+- **Novelty** — productos fuera de la categoría favorita
+
+### Tests estadísticos
+
+- **Paired t-test (Student):** compara medias pareadas entre modelos.
+- **Wilcoxon signed-rank:** alternativa no paramétrica al t-test.
+- **Cohen's d:** mide el tamaño del efecto (magnitud práctica de la mejora).
+- **Bootstrap 95% CI:** intervalos de confianza por remuestreo.
+
+### Documentación detallada
+
+Para una explicación completa paso a paso, consulta el documento [`PruebaRobusta.md`](./PruebaRobusta.md).
 
 ---
 
@@ -264,7 +317,8 @@ Ambos reportes pueden exportarse en **PDF**, **Excel** y **Word**.
 - ✅ Historial de compras por cliente
 - ✅ Panel de administración con dashboard, gráficas y métricas
 - ✅ CRUD de productos y usuarios (admin)
-- ✅ Reportes operacionales y de gestión exportables
+- ✅ Reportes operacionales y de gestión exportables (PDF, Excel, Word)
+- ✅ Módulo de pruebas estadísticas robustas para validar el modelo de IA
 - ✅ Autenticación con JWT y roles (admin / cliente)
 - ✅ Base de datos SQLite con seed automático
 
@@ -276,7 +330,8 @@ Ambos reportes pueden exportarse en **PDF**, **Excel** y **Word**.
 2. El CORS está configurado para `http://localhost:5173` y `http://localhost:5174`.
 3. Los productos del backend tienen `tags` como string separado por comas; el frontend los normaliza a array.
 4. La red neuronal usa el catálogo local de `productos.js`; los IDs deben coincidir con los de la BD.
-5. Si el puerto 8000 está ocupado, cambia el puerto del backend y actualiza `VITE_API_URL` en un archivo `.env`.
+5. El módulo de **Pruebas** entrena la Red Neuronal una vez por usuario sintético; con 40 usuarios puede tardar 20-60 segundos.
+6. Si el puerto 8000 está ocupado, cambia el puerto del backend y actualiza `VITE_API_URL` en un archivo `.env`.
 
 ---
 

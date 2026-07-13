@@ -247,6 +247,67 @@ cd backend
 - Persistir modelo de IA entre sesiones.
 - Conectar pasarela de pago real.
 - Agregar tests de frontend con Vitest + React Testing Library.
+
+---
+
+## 12. Módulo de Pruebas del Modelo de IA
+
+El módulo `AdminPruebas` permite evaluar estadísticamente el modelo de recomendación con Red Neuronal de forma offline.
+
+### Componentes del módulo
+
+| Archivo | Propósito |
+|---------|-----------|
+| `src/utils/datosPrueba.js` | Generación de usuarios y compras sintéticas con perfiles realistas |
+| `src/utils/EvaluacionModelo.js` | Métricas de recomendación, evaluación por usuario e intervalos bootstrap |
+| `src/utils/baselines.js` | Modelos baseline: Random, Popularidad, Content-Based, Categoría Favorita |
+| `src/utils/testsEstadisticos.js` | t-test pareado, Wilcoxon, McNemar, Cohen's d e intervalos de confianza |
+| `src/utils/RedNeuronalWrapper.js` | Adaptador de `RedNeuronal.js` al interfaz de evaluación |
+| `src/views/admin/AdminPruebas.jsx` | Interfaz de ejecución, visualización y exportación de resultados |
+
+### Flujo de evaluación
+
+1. Generar usuarios sintéticos con historiales de compra controlados.
+2. Dividir las compras de cada usuario en train/test temporal (80/20 por defecto).
+3. Entrenar cada recomendador con el train del usuario y predecir top-K productos.
+4. Calcular métricas comparando recomendaciones contra el test.
+5. Comparar la Red Neuronal contra cada baseline con tests estadísticos.
+6. Calcular intervalos de confianza bootstrap al 95%.
+
+### Métricas soportadas
+
+- **Hit Rate@K** — % de usuarios con al menos un acierto en top-K
+- **Precision@K** — % de recomendaciones correctas en top-K
+- **Recall@K** — % de compras de test recuperadas en top-K
+- **F1@K** — media armónica de precision y recall
+- **MRR** — ranking inverso medio del primer acierto
+- **MAP** — mean average precision
+- **NDCG@K** — ganancia acumulada descuadrada normalizada
+- **Coverage** — % del catálogo recomendado al menos una vez
+- **Diversity** — variedad de categorías en recomendaciones
+- **Novelty** — productos fuera de la categoría favorita del usuario
+
+### Tests estadísticos
+
+- **Paired t-test (Student)** — comparación de medias pareadas
+- **Wilcoxon signed-rank** — alternativa no paramétrica
+- **McNemar's test** — comparación de aciertos/fallos binarios
+- **Bootstrap 95% CI** — intervalos de confianza por remuestreo
+- **Cohen's d** — tamaño del efecto
+
+### Uso
+
+1. Ir a **Administrador > Pruebas**.
+2. Configurar cantidad de usuarios sintéticos, top-K y semilla.
+3. Hacer clic en **Ejecutar evaluación**.
+4. Revisar tabla comparativa, gráficas, intervalos de confianza y p-values.
+5. Exportar resultados a Excel si se desea.
+
+### Notas importantes
+
+- Los datos son **sintéticos**, por lo que los resultados validan la metodología, no el rendimiento real en producción.
+- Cada evaluación entrena un modelo de Red Neuronal limpio por usuario para evitar data leakage.
+- El tiempo de ejecución depende del número de usuarios; 40 usuarios tardan aproximadamente 20-40 segundos.
 - Mejorar manejo de errores y estados de carga.
 - Normalizar categorías duplicadas en el catálogo.
 - Implementar paginación en listados.
