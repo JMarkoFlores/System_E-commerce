@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
-const CustomerLayout = () => {
+const CustomerLayout = ({ carritoCount = 0 }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -40,6 +40,11 @@ const CustomerLayout = () => {
               className="relative p-2 bg-blue-100 rounded-lg hover:bg-blue-200 transition"
             >
               <ShoppingCart size={24} className="text-blue-600" />
+              {carritoCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-sm border-2 border-white">
+                  {carritoCount}
+                </span>
+              )}
             </NavLink>
 
             <button

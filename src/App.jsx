@@ -203,7 +203,7 @@ function App() {
         {/* Cliente */}
         <Route
           path="/"
-          element={<ProtectedRoute rol="cliente"><CustomerLayout /></ProtectedRoute>}
+          element={<ProtectedRoute rol="cliente"><CustomerLayout carritoCount={carrito.length} /></ProtectedRoute>}
         >
           <Route path="catalogo" element={<Catalogo productos={productos} onAddToCart={agregarAlCarrito} onBuyNow={comprarProducto} />} />
           <Route path="recomendaciones" element={
