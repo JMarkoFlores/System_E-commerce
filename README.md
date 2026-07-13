@@ -1,614 +1,288 @@
-# 🛍️ Sistema de Recomendación de Productos con IA
+# 🛍️ TechStore AI
 
-Sistema inteligente de recomendación de productos que utiliza una Red Neuronal Artificial construida con TensorFlow.js para aprender de las preferencias del usuario y generar recomendaciones personalizadas en tiempo real.
+Tienda e-commerce con sistema de recomendación basado en Inteligencia Artificial. El proyecto está dividido en dos áreas:
 
----
-
-## 📚 Librerías y Tecnologías Utilizadas
-
-### **Framework Principal**
-
-- **React** (v18.2.0) - Framework de interfaz de usuario para construir componentes interactivos
-- **React DOM** (v18.2.0) - Renderización de componentes React en el navegador
-
-### **Inteligencia Artificial**
-
-- **TensorFlow.js** (@tensorflow/tfjs v4.22.0) - Librería de machine learning para JavaScript que permite entrenar y ejecutar modelos de redes neuronales directamente en el navegador
-
-### **Visualización de Datos**
-
-- **Recharts** (v3.6.0) - Librería para crear gráficas interactivas (LineChart, BarChart, RadarChart) que muestra métricas del modelo de IA
-
-### **UI/UX**
-
-- **Lucide React** (v0.263.1) - Librería de iconos modernos para la interfaz de usuario
-- **Tailwind CSS** (v3.3.2) - Framework de CSS utilitario para diseño responsivo
-
-### **Herramientas de Desarrollo**
-
-- **Vite** (v4.3.9) - Build tool ultrarrápido para desarrollo y producción
-- **@vitejs/plugin-react** (v4.0.0) - Plugin de Vite para soporte de React con Fast Refresh
-- **PostCSS** (v8.4.24) - Procesador de CSS
-- **Autoprefixer** (v10.4.14) - Plugin de PostCSS para compatibilidad entre navegadores
+- **Área Cliente:** catálogo de productos, recomendaciones con IA, carrito de compras, historial de compras y pasarela de pago simulada.
+- **Área Administrador:** dashboard con KPIs, gestión de productos, gestión de usuarios, gráficas, métricas de IA, reportes operacionales/de gestión y módulo de pruebas.
 
 ---
 
-## 🚀 Instalación y Configuración
+## 📚 Stack Tecnológico
 
-### **Requisitos Previos**
-
-- Node.js (versión 16 o superior)
-- npm o yarn
-
-### **Instalación desde Cero**
-
-1. **Clonar o descargar el proyecto**
-
-   ```bash
-   cd SistemaRecomendacionProducto
-   ```
-
-2. **Instalar todas las dependencias**
-
-   ```bash
-   npm install
-   ```
-
-3. **Ejecutar en modo desarrollo**
-
-   ```bash
-   npm run dev
-   ```
-
-4. **Compilar para producción**
-
-   ```bash
-   npm run build
-   ```
-
-   Este comando genera una versión optimizada del proyecto en la carpeta `dist/`.
-
-5. **Previsualizar build de producción** (opcional)
-   ```bash
-   npm run preview
-   ```
-   Permite probar la versión compilada localmente antes de desplegarla.
+| Capa | Tecnología | Versión |
+|------|------------|---------|
+| Frontend | React | 18.2.0 |
+| Routing | React Router DOM | 6.x / 7.x |
+| Build tool | Vite | 4.3.9 |
+| Estilos | Tailwind CSS | 3.3.2 |
+| HTTP Client | Axios | ^1.x |
+| IA (frontend) | TensorFlow.js | 4.22.0 |
+| Gráficas | Recharts | 3.6.0 |
+| Iconos | Lucide React | 0.263.1 |
+| Reportes PDF | jsPDF + jspdf-autotable | ^4.x / ^5.x |
+| Reportes Excel | xlsx (SheetJS) | ^0.18 |
+| Backend | FastAPI | 0.115.0 |
+| Servidor ASGI | Uvicorn | 0.30.6 |
+| ORM | SQLAlchemy | 2.0.35 |
+| Validación | Pydantic | 2.9.2 |
+| Auth | JWT (python-jose) + bcrypt | 3.3.0 / 4.1.2 |
+| Base de datos | SQLite | — |
 
 ---
 
-## 🧠 Red Neuronal con TensorFlow.js
+## ⚙️ Requisitos Previos
 
-### **Arquitectura de la Red Neuronal**
-
-El sistema utiliza una **Red Neuronal Artificial (RNA)** de tipo **Sequential** implementada con TensorFlow.js. La arquitectura consta de:
-
-```
-Entrada → Capa Densa (32 neuronas, ReLU) → Dropout (20%) →
-Capa Densa (16 neuronas, ReLU) → Capa de Salida (1 neurona, Sigmoid)
-```
-
-**Detalles de cada capa:**
-
-1. **Capa de Entrada:**
-
-   - Recibe vectores de características (features) de dimensión variable según categorías y tags
-   - Incluye: one-hot encoding de categorías (7 features) + one-hot encoding de tags (dinámico) + 3 features de precio
-
-2. **Primera Capa Densa (32 neuronas):**
-
-   - Función de activación: `ReLU` (Rectified Linear Unit)
-   - Inicializador: `heNormal` (para mejor convergencia)
-   - Aprende patrones complejos de las preferencias del usuario
-
-3. **Capa Dropout (20%):**
-
-   - Previene el sobreajuste (overfitting) desactivando aleatoriamente 20% de las neuronas durante el entrenamiento
-
-4. **Segunda Capa Densa (16 neuronas):**
-
-   - Función de activación: `ReLU`
-   - Refina los patrones aprendidos
-
-5. **Capa de Salida (1 neurona):**
-   - Función de activación: `Sigmoid` (produce valores entre 0 y 1)
-   - Representa el **score de recomendación** del producto
-
-**Compilación del Modelo:**
-
-- **Optimizador:** Adam (learning rate: 0.001)
-- **Función de pérdida:** MSE (Mean Squared Error)
-- **Métrica:** Accuracy
-
-### **Métodos Principales de Predicción**
-
-#### **1. Método `entrenar(historialUsuario)`**
-
-Entrena la red neuronal con el historial de compras del usuario.
-
-**¿Cómo funciona?**
-
-1. **Generación de datos de entrenamiento:**
-
-   - Itera sobre todos los productos del catálogo
-   - Extrae características (features) de cada producto usando `extraerFeatures()`
-   - Asigna una etiqueta (label):
-     - `1.0` si el producto fue comprado
-     - `0.0 - 0.7` si no fue comprado (score basado en similitud con productos comprados)
-
-2. **Entrenamiento:**
-
-   - Convierte los datos a tensores de TensorFlow
-   - Ejecuta 20 épocas de entrenamiento con batch size de 32
-   - Shuffle activado para mejor generalización
-   - Usa backpropagation para ajustar los pesos de la red
-
-3. **Resultado:**
-   - El modelo aprende a predecir qué productos tienen mayor probabilidad de interesar al usuario
-   - Guarda estadísticas de entrenamiento (loss, número de compras, generación)
-
-**Código relevante:**
-
-```javascript
-async entrenar(historialUsuario) {
-  // Genera features y labels para cada producto
-  const xs = tf.tensor2d(datosEntrenamiento);
-  const ys = tf.tensor2d(labels, [labels.length, 1]);
-
-  // Entrena el modelo
-  await this.modelo.fit(xs, ys, {
-    epochs: 20,
-    batchSize: 32,
-    shuffle: true
-  });
-}
-```
-
-#### **2. Método `recomendar(historialUsuario, n = 6)`**
-
-Genera recomendaciones personalizadas usando el modelo entrenado.
-
-**¿Cómo funciona?**
-
-1. **Filtrado inicial:**
-
-   - Excluye productos ya comprados por el usuario
-
-2. **Predicción con la red neuronal:**
-
-   - Para cada producto no comprado:
-     - Extrae sus características usando `extraerFeatures()`
-     - Convierte las features a un tensor
-     - Usa `modelo.predict()` para obtener un score entre 0 y 1
-     - Limpia los tensores de memoria
-
-3. **Ordenamiento:**
-
-   - Ordena productos por score descendente (mayor score = mayor relevancia)
-
-4. **Diversificación:**
-
-   - Aplica un algoritmo de balanceo para evitar recomendar solo de una categoría
-   - Limita máximo 2 productos por categoría en las primeras recomendaciones
-
-5. **Resultado:**
-   - Retorna los top `n` productos recomendados con sus scores y razones
-
-**Código relevante:**
-
-```javascript
-async recomendar(historialUsuario, n = 6) {
-  for (const producto of productosNoComprados) {
-    const features = this.extraerFeatures(producto, historialUsuario);
-
-    // ¡PREDICCIÓN CON LA RED NEURONAL!
-    const tensorInput = tf.tensor2d([features]);
-    const prediccion = this.modelo.predict(tensorInput);
-    const score = (await prediccion.data())[0];
-
-    recomendacionesConScore.push({ ...producto, score });
-  }
-
-  // Ordenar y balancear
-  return recomendacionesBalanceadas.slice(0, n);
-}
-```
-
-#### **3. Método `extraerFeatures(producto, historialUsuario)`**
-
-Convierte un producto en un vector numérico que la red neuronal puede procesar.
-
-**Features extraídas:**
-
-- **Categoría (one-hot encoding):** 7 valores binarios (1 si coincide, 0 si no)
-- **Tags (one-hot encoding):** N valores binarios según tags del catálogo
-- **Precio normalizado:** Precio dividido entre 2500 (normalización)
-- **Diferencia de precio:** Distancia del precio del producto con el promedio de compras
-- **Rango de precio:** 1 si está dentro del rango de precios del historial, 0 si no
+- **Node.js** (versión 16 o superior)
+- **npm** o **yarn**
+- **Python** 3.10 o superior
 
 ---
 
-## 🎨 Generación de Imágenes
+## 🚀 Instalación y Ejecución desde Cero
 
-### **Librería Utilizada**
+### 1. Clonar o descargar el proyecto
 
-El sistema **NO utiliza una librería externa para generar imágenes artificiales**. En su lugar, utiliza un sistema de **imágenes estáticas** combinado con **emojis decorativos** como fallback.
-
-### **Sistema de Gestión de Imágenes**
-
-#### **Método Principal: `obtenerRutaImagen()`**
-
-**Ubicación:** [src/views/Recomendaciones.jsx](src/views/Recomendaciones.jsx)
-
-**¿Cómo funciona?**
-
-```javascript
-const obtenerRutaImagen = () => {
-  try {
-    // Utiliza import.meta.url de Vite para resolver rutas dinámicas
-    return new URL(`../img/${producto.imagen}`, import.meta.url).href;
-  } catch (error) {
-    return null;
-  }
-};
+```bash
+cd Tienda_E-Commerce
 ```
 
-**Funcionamiento:**
+### 2. Instalar dependencias del Frontend
 
-1. **Vite's `import.meta.url`:**
-
-   - Es una característica de ES Modules que proporciona la URL del módulo actual
-   - Permite importar imágenes de forma dinámica en tiempo de construcción
-
-2. **Resolución de rutas:**
-   - Construye la ruta completa a la imagen desde `src/img/`
-   - Si la imagen existe, retorna la URL procesada por Vite
-   - Si falla, retorna `null` y se usa el fallback
-
-#### **Componente: `ImagenProductoRecomendado`**
-
-Renderiza la imagen del producto con efectos visuales.
-
-**Características:**
-
-- **Manejo de errores:** Si la imagen falla al cargar (`onError`), muestra un emoji
-- **Efectos hover:** Zoom y overlay con gradientes
-- **Fallback elegante:** Usa emojis de `EMOJI_CATEGORIAS` si no hay imagen
-- **Optimización:** Las imágenes se cargan como `object-contain` para mantener proporciones
-
-**Código simplificado:**
-
-```jsx
-const ImagenProductoRecomendado = ({ producto }) => {
-  const [imagenError, setImagenError] = useState(false);
-
-  return (
-    <div className="relative h-40 bg-gradient-to-br from-purple-50 to-blue-50">
-      {rutaImagen && !imagenError ? (
-        <img
-          src={rutaImagen}
-          alt={producto.nombre}
-          onError={() => setImagenError(true)}
-        />
-      ) : (
-        <div className="text-6xl">
-          {EMOJI_CATEGORIAS[producto.categoria] || "📦"}
-        </div>
-      )}
-    </div>
-  );
-};
+```bash
+npm install
 ```
 
-**Librerías involucradas:**
+### 3. Configurar y levantar el Backend
 
-- **Vite:** Procesa y optimiza las imágenes durante el build
-- **React:** Maneja el estado de carga de imágenes
-- **Tailwind CSS:** Proporciona las clases de estilo y efectos visuales
+El backend utiliza un entorno virtual de Python.
+
+```bash
+cd backend
+python -m venv venv
+
+# Windows PowerShell
+.\venv\Scripts\pip.exe install -r requirements.txt
+
+# Windows CMD
+# venv\Scripts\pip.exe install -r requirements.txt
+```
+
+Levantar el servidor backend:
+
+```bash
+# Windows PowerShell
+.\venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
+
+# Windows CMD
+# venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
+```
+
+El backend quedará disponible en `http://localhost:8000`.
+
+> **Nota:** Si el puerto 8000 está ocupado, usa otro puerto (por ejemplo `--port 8001`). Si cambias el puerto, crea un archivo `.env` en la raíz del proyecto con:
+> ```
+> VITE_API_URL=http://localhost:8001
+> ```
+
+### 4. Levantar el Frontend
+
+En otra terminal, desde la carpeta raíz del proyecto:
+
+```bash
+npm run dev
+```
+
+El frontend quedará disponible en `http://localhost:5173`.
+
+### 5. Abrir la aplicación
+
+- Navega a `http://localhost:5173`
+- Usa las credenciales de abajo para iniciar sesión
 
 ---
 
-## 📊 Sistema de Métricas
+## 🔐 Credenciales de Autenticación
 
-### **Librería Principal**
+### Administrador
 
-- **Recharts** - Para visualizar las métricas en gráficas interactivas
-
-### **Métodos Principales de Cálculo de Métricas**
-
-Todas las métricas se calculan en el componente `Metricas.jsx` usando un `useMemo` hook para optimización.
-
-#### **1. Precision@K**
-
-**Método:** Bloque de código en `useMemo`
-
-**¿Qué mide?**
-Mide qué tan relevantes son las recomendaciones basándose en similitud con compras recientes.
-
-**¿Cómo se calcula?**
-
-```javascript
-// Analiza últimas 5 compras
-const ultimasCompras = historialCompras.slice(-5);
-const categoriasRecientes = ultimasCompras.map(c => c.categoria);
-const tagsRecientes = new Set(ultimasCompras.flatMap(c => c.tags));
-
-// Evalúa top 6 recomendaciones
-recomendaciones.slice(0, 6).forEach(rec => {
-  let puntos = 0;
-  if (categoriasRecientes.includes(rec.categoria)) puntos += 0.5;
-  if (rec.tags coinciden con tagsRecientes) puntos += 0.5;
-  puntajeRelevancia += puntos;
-});
-
-const precisionAtK = (puntajeRelevancia / 6) * 100;
+```
+Email:    admin@losportales.com.pe
+Contraseña: admin123
 ```
 
-**Interpretación:**
+### Cliente de prueba
 
-- 0-40%: Baja relevancia
-- 40-70%: Relevancia moderada
-- 70-100%: Alta relevancia (recomendaciones muy alineadas con preferencias)
-
----
-
-#### **2. Hit Rate (Tasa de Aciertos)**
-
-**¿Qué mide?**
-Porcentaje de recomendaciones con score alto (por encima de un umbral).
-
-**¿Cómo se calcula?**
-
-```javascript
-// Calcula score promedio
-const scorePromedio =
-  recomendaciones.reduce((sum, r) => sum + r.score, 0) / recomendaciones.length;
-
-// Define umbral dinámico (70% del promedio, mínimo 0.2)
-const umbral = Math.max(scorePromedio * 0.7, 0.2);
-
-// Cuenta recomendaciones por encima del umbral
-const recomendacionesAltas = recomendaciones.filter(
-  (r) => r.score > umbral
-).length;
-const hitRate = (recomendacionesAltas / recomendaciones.length) * 100;
+```
+Email:    cliente@test.com
+Contraseña: cliente123
 ```
 
-**Interpretación:**
-Mide la "confianza" del modelo. Un Hit Rate alto significa que el modelo está seguro de sus recomendaciones.
+> También puedes registrar nuevos clientes desde la pantalla de login.
 
 ---
 
-#### **3. Diversidad**
+## 🧪 Scripts Disponibles
 
-**¿Qué mide?**
-Variedad de categorías en las recomendaciones (evita "burbuja de filtro").
+### Frontend (desde la raíz del proyecto)
 
-**¿Cómo se calcula?**
-
-```javascript
-const categoriasRec = new Set(recomendaciones.map((r) => r.categoria));
-const diversidad = (categoriasRec.size / 7) * 100; // 7 = total de categorías
+```bash
+npm run dev      # Servidor de desarrollo en http://localhost:5173
+npm run build    # Build de producción en dist/
+npm run preview  # Previsualizar build
 ```
 
-**Interpretación:**
+### Backend (desde la carpeta backend)
 
-- 0-30%: Baja diversidad (pocas categorías)
-- 30-60%: Diversidad moderada
-- 60-100%: Alta diversidad (explora múltiples categorías)
-
----
-
-#### **4. Relevancia**
-
-**¿Qué mide?**
-Similitud entre recomendaciones y categorías compradas recientemente.
-
-**¿Cómo se calcula?**
-
-```javascript
-const categoriasCompradas = historialCompras.slice(-10).map((c) => c.categoria);
-const recRelevantes = recomendaciones.filter((r) =>
-  categoriasCompradas.includes(r.categoria)
-).length;
-const relevancia = (recRelevantes / recomendaciones.length) * 100;
+```bash
+.\venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
 ```
 
-**Interpretación:**
-Indica qué tan bien las recomendaciones se alinean con el comportamiento reciente del usuario.
+### Tests del backend
 
----
-
-#### **5. Accuracy del Modelo**
-
-**¿Qué mide?**
-Precisión del modelo de IA basado en la función de pérdida (loss) del entrenamiento.
-
-**¿Cómo se calcula?**
-
-```javascript
-const lossActual =
-  estadisticasIA?.historialEntrenamiento?.slice(-1)[0]?.loss || 1;
-const accuracy = Math.max(0, Math.min(100, (1 - lossActual) * 100));
+```bash
+cd backend
+.\venv\Scripts\python.exe -m pytest app/test_api.py -v
 ```
-
-**Interpretación:**
-
-- Loss bajo = Accuracy alto = Modelo bien entrenado
-- Loss alto = Accuracy bajo = Modelo necesita más datos o épocas
-
----
-
-#### **6. Score Promedio**
-
-**¿Qué mide?**
-Confianza promedio del modelo en sus recomendaciones.
-
-**¿Cómo se calcula?**
-
-```javascript
-const scorePromedio =
-  recomendaciones.reduce((sum, r) => sum + r.score, 0) / recomendaciones.length;
-const scorePromedioDisplay = scorePromedio * 100;
-```
-
-**Interpretación:**
-Score promedio entre 0-100%. Más alto = El modelo tiene alta confianza en las recomendaciones.
-
----
-
-#### **7. Novedad**
-
-**¿Qué mide?**
-Capacidad del sistema para recomendar productos fuera de la categoría favorita (evita repetición).
-
-**¿Cómo se calcula?**
-
-```javascript
-// Encuentra categoría más comprada
-const categoriaFavorita = historialCompras
-  .reduce((acc, c) => {
-    acc.set(c.categoria, (acc.get(c.categoria) || 0) + 1);
-    return acc;
-  }, new Map())
-  .sort((a, b) => b[1] - a[1])[0]?.[0];
-
-// Cuenta recomendaciones de otras categorías
-const recNovedosas = recomendaciones.filter(
-  (r) => r.categoria !== categoriaFavorita
-).length;
-const novedad = (recNovedosas / recomendaciones.length) * 100;
-```
-
-**Interpretación:**
-Alta novedad = El sistema te saca de tu zona de confort y te muestra cosas nuevas.
-
----
-
-#### **8. Cobertura**
-
-**¿Qué mide?**
-Porcentaje del catálogo cubierto por las recomendaciones.
-
-**¿Cómo se calcula?**
-
-```javascript
-const cobertura = (categoriasRec.size / 7) * 100;
-```
-
-**Interpretación:**
-Similar a diversidad. Mide qué tan amplio es el espacio de recomendaciones.
-
----
-
-#### **9. Confianza del Modelo**
-
-**¿Qué mide?**
-Diferencia entre el score más alto y más bajo (dispersión).
-
-**¿Cómo se calcula?**
-
-```javascript
-const scores = recomendaciones.map((r) => r.score || 0);
-const maxScore = Math.max(...scores);
-const minScore = Math.min(...scores);
-const confianza = ((maxScore - minScore) / maxScore) * 100;
-```
-
-**Interpretación:**
-
-- Alta confianza: El modelo distingue claramente entre buenas y malas recomendaciones
-- Baja confianza: Scores similares, menos certeza del modelo
-
----
-
-#### **10. Evolución del Loss**
-
-**¿Qué mide?**
-Histórico del error de entrenamiento a lo largo de las generaciones.
-
-**¿Cómo se obtiene?**
-
-```javascript
-const evolucionLoss =
-  estadisticasIA?.historialEntrenamiento?.slice(-5).map((h, idx) => ({
-    generacion: `Gen ${h.generacion}`,
-    loss: (h.loss * 100).toFixed(2),
-    compras: h.numCompras,
-  })) || [];
-```
-
-**Interpretación:**
-Se visualiza en un gráfico de líneas (LineChart de Recharts). Loss decreciente = Modelo mejorando con el tiempo.
-
----
-
-### **Visualización de Métricas**
-
-Las métricas se visualizan usando componentes de **Recharts**:
-
-1. **RadarChart:** Muestra Precisión, Relevancia, Diversidad, Novedad, Cobertura y Accuracy en un gráfico de radar
-2. **LineChart:** Muestra la evolución del loss a través de las generaciones de entrenamiento
-3. **Tarjetas de métricas:** Displays individuales con iconos de Lucide React
-
----
-
-## 🎯 Flujo del Sistema
-
-1. **Inicio:** Usuario navega el catálogo de productos
-2. **Compra:** Usuario agrega productos al carrito y compra
-3. **Aprendizaje:** La red neuronal se entrena con el historial de compras usando `entrenar()`
-4. **Predicción:** El modelo genera recomendaciones personalizadas usando `recomendar()`
-5. **Evaluación:** El sistema calcula métricas para evaluar la calidad de las recomendaciones
-6. **Mejora continua:** Con cada nueva compra, el modelo se reentrena y mejora
 
 ---
 
 ## 📁 Estructura del Proyecto
 
 ```
-Sistema de Recomendación
-├── src/
-│   ├── components/        # Componentes reutilizables (Header, ProductCard, etc.)
-│   ├── views/            # Vistas principales (Catálogo, Recomendaciones, Métricas, etc.)
-│   ├── utils/            # Lógica de negocio
-│   │   ├── RedNeuronal.js   # Implementación de la red neuronal con TensorFlow.js
-│   │   └── productos.js     # Datos del catálogo
-│   ├── img/              # Imágenes de productos
-│   ├── App.jsx           # Componente principal
-│   └── main.jsx          # Punto de entrada de React
-├── index.html            # HTML base
-├── package.json          # Dependencias y scripts
-├── vite.config.js        # Configuración de Vite
-├── tailwind.config.js    # Configuración de Tailwind CSS
-└── README.md             # Este archivo
+Tienda_E-Commerce/
+├── backend/                       # FastAPI
+│   ├── app/
+│   │   ├── main.py                # Entry point + CORS + routers
+│   │   ├── database.py            # Conexión SQLite + SessionLocal
+│   │   ├── models.py              # Tablas SQLAlchemy
+│   │   ├── schemas.py             # Pydantic schemas
+│   │   ├── auth.py                # Hash bcrypt, JWT, dependencias de auth
+│   │   ├── seed.py                # Seed de admin + 100 productos
+│   │   ├── seed_data.json         # Productos del catálogo
+│   │   ├── test_api.py            # Tests básicos con TestClient
+│   │   └── routers/
+│   │       ├── auth.py            # Login y registro
+│   │       ├── productos.py       # CRUD productos
+│   │       ├── pedidos.py         # Crear pedido, listar pedidos
+│   │       ├── usuarios.py        # CRUD usuarios (admin)
+│   │       └── reportes.py        # Reportes operacional y gestión
+│   ├── venv/                      # Entorno virtual Python
+│   ├── requirements.txt
+│   └── ecommerce.db               # Base de datos SQLite (generada al ejecutar)
+├── src/                           # React frontend
+│   ├── main.jsx                   # Punto de entrada
+│   ├── App.jsx                    # Router principal y estado global
+│   ├── index.css                  # Tailwind + estilos globales
+│   ├── contexts/
+│   │   └── AuthContext.jsx        # Auth con JWT
+│   ├── services/
+│   │   └── api.js                 # Axios configurado + endpoints
+│   ├── components/
+│   │   ├── common/
+│   │   │   ├── PaymentModal.jsx   # Pasarela Yape/Plin QR + Tarjeta
+│   │   │   └── ProductImage.jsx   # Componente unificado de imágenes
+│   │   ├── customer/
+│   │   │   ├── CustomerLayout.jsx # Header + navegación cliente
+│   │   │   └── ProductCard.jsx    # Tarjeta de producto
+│   │   └── admin/
+│   │       └── AdminLayout.jsx    # Sidebar dashboard admin
+│   ├── views/
+│   │   ├── customer/              # Vistas del área cliente
+│   │   │   ├── Login.jsx
+│   │   │   ├── Catalogo.jsx
+│   │   │   ├── Carrito.jsx
+│   │   │   ├── Recomendaciones.jsx
+│   │   │   └── Historial.jsx
+│   │   └── admin/                 # Vistas del área administrador
+│   │       ├── AdminDashboard.jsx
+│   │       ├── AdminProductos.jsx
+│   │       ├── AdminUsuarios.jsx
+│   │       ├── AdminGraficas.jsx
+│   │       ├── AdminMetricas.jsx
+│   │       ├── AdminReportes.jsx
+│   │       └── AdminPruebas.jsx
+│   └── utils/
+│       ├── productos.js           # Catálogo local + emojis (usado por IA)
+│       └── RedNeuronal.js         # Red neuronal TensorFlow.js
+├── index.html
+├── package.json
+├── vite.config.js
+├── tailwind.config.js
+└── README.md
 ```
 
 ---
 
-## 🔧 Scripts Disponibles
+## 🧠 Sistema de Recomendación con IA
 
-```bash
-npm run dev      # Inicia servidor de desarrollo (http://localhost:5173)
-npm run build    # Compila el proyecto para producción (carpeta dist/)
-npm run preview  # Previsualiza la versión compilada
+La red neuronal (`src/utils/RedNeuronal.js`) se entrena en el navegador con **TensorFlow.js** usando el historial de compras del cliente. Genera recomendaciones personalizadas en tiempo real y el número de recomendaciones es dinámico según la cantidad de compras del usuario.
+
+**Arquitectura de la red:**
+
 ```
+Entrada → Capa Densa (32 neuronas, ReLU) → Dropout (20%) →
+Capa Densa (16 neuronas, ReLU) → Capa de Salida (1 neurona, Sigmoid)
+```
+
+- **Optimizador:** Adam (learning rate 0.001)
+- **Función de pérdida:** MSE
+- **Entrenamiento:** 20 épocas, batch size 32
+
+> **Nota:** El modelo no se persiste entre sesiones; se entrena desde cero en cada sesión del navegador.
 
 ---
 
-## 🤖 Características de la IA
+## 💳 Flujo de Compra
 
-- ✅ **Aprendizaje automático:** Red neuronal que aprende de cada compra
-- ✅ **Predicciones en tiempo real:** Inferencia directamente en el navegador
-- ✅ **Mejora continua:** El modelo se reentrena con cada nueva compra
-- ✅ **Balanceo de diversidad:** Evita recomendar solo una categoría
-- ✅ **Métricas avanzadas:** 10 métricas para evaluar el rendimiento del modelo
-- ✅ **Sin servidor:** Todo el procesamiento ocurre en el cliente (TensorFlow.js)
+1. El cliente agrega productos al carrito o hace "Comprar ahora".
+2. Se abre el modal de pago con opciones **Yape/Plin (QR)** o **Tarjeta de Crédito**.
+3. Al confirmar el pago, se envía `POST /api/pedidos` al backend.
+4. El backend crea el pedido, descuenta stock y guarda los detalles.
+5. El frontend actualiza el historial local y reentrena la red neuronal.
+
+> El pago es **simulado**; no se conecta con pasarelas reales.
+
+---
+
+## 📊 Reportes Administrativos
+
+El módulo de reportes permite generar:
+
+- **Reporte Operacional:** ventas por día, productos más vendidos y pedidos recientes.
+- **Reporte de Gestión:** total de ingresos, total de pedidos, total de clientes y categorías top.
+
+Ambos reportes pueden exportarse en **PDF**, **Excel** y **Word**.
+
+---
+
+## 🎯 Características Principales
+
+- ✅ Catálogo de productos con búsqueda y filtros
+- ✅ Carrito de compras funcional
+- ✅ Pasarela de pago simulada (Yape/Plin QR + Tarjeta)
+- ✅ Recomendaciones con IA usando TensorFlow.js
+- ✅ Historial de compras por cliente
+- ✅ Panel de administración con dashboard, gráficas y métricas
+- ✅ CRUD de productos y usuarios (admin)
+- ✅ Reportes operacionales y de gestión exportables
+- ✅ Autenticación con JWT y roles (admin / cliente)
+- ✅ Base de datos SQLite con seed automático
+
+---
+
+## ⚠️ Puntos de Atención
+
+1. El **backend debe estar corriendo** para que el frontend funcione correctamente (login, productos, pedidos, etc.).
+2. El CORS está configurado para `http://localhost:5173` y `http://localhost:5174`.
+3. Los productos del backend tienen `tags` como string separado por comas; el frontend los normaliza a array.
+4. La red neuronal usa el catálogo local de `productos.js`; los IDs deben coincidir con los de la BD.
+5. Si el puerto 8000 está ocupado, cambia el puerto del backend y actualiza `VITE_API_URL` en un archivo `.env`.
 
 ---
 
 ## 👨‍💻 Autor
 
-Sistema desarrollado como proyecto educativo de Inteligencia Artificial aplicada al e-commerce.
+Proyecto educativo de Inteligencia Artificial aplicada al e-commerce.
 
 ---
 
