@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { X, CreditCard, Smartphone, QrCode } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { QRCodeSVG } from 'qrcode.react';
 
 const PaymentModal = ({ total, onClose, onConfirm }) => {
+  const { t } = useTranslation();
   const [metodoPago, setMetodoPago] = useState('yape');
   const [procesando, setProcesando] = useState(false);
   const [tarjeta, setTarjeta] = useState({
@@ -15,7 +17,7 @@ const PaymentModal = ({ total, onClose, onConfirm }) => {
   const handlePagar = async () => {
     if (metodoPago === 'tarjeta') {
       if (!tarjeta.numero || !tarjeta.nombre || !tarjeta.expiracion || !tarjeta.cvv) {
-        alert('Por favor completa todos los campos de la tarjeta');
+        alert(t('payment.cardRequired'));
         return;
       }
     }
@@ -47,8 +49,8 @@ const PaymentModal = ({ total, onClose, onConfirm }) => {
       <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-border">
         <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-white flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold">Pasarela de Pago</h2>
-            <p className="text-purple-100">Total a pagar: <span className="font-bold text-xl">${total}</span></p>
+            <h2 className="text-2xl font-bold">{t('payment.title')}</h2>
+            <p className="text-purple-100">{t('payment.totalToPay')}: <span className="font-bold text-xl">${total}</span></p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition">
             <X size={24} />
@@ -67,7 +69,7 @@ const PaymentModal = ({ total, onClose, onConfirm }) => {
               }`}
             >
               <Smartphone size={20} />
-              <span className="font-semibold">Yape/Plin</span>
+              <span className="font-semibold">{t('payment.yape')}</span>
             </button>
             <button
               onClick={() => setMetodoPago('tarjeta')}
@@ -78,7 +80,7 @@ const PaymentModal = ({ total, onClose, onConfirm }) => {
               }`}
             >
               <CreditCard size={20} />
-              <span className="font-semibold">Tarjeta</span>
+              <span className="font-semibold">{t('payment.card')}</span>
             </button>
           </div>
 
@@ -96,22 +98,22 @@ const PaymentModal = ({ total, onClose, onConfirm }) => {
                 </div>
                 <div className="flex items-center justify-center mt-3 text-purple-700 dark:text-purple-300">
                   <QrCode size={20} className="mr-2" />
-                  <span className="font-semibold">Escanea para pagar</span>
+                  <span className="font-semibold">{t('payment.scanQR')}</span>
                 </div>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Escanea el código QR con tu aplicación Yape o Plin y confirma el pago.
+                {t('payment.scanInstructions')}
               </p>
             </div>
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Número de tarjeta</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('payment.cardNumber')}</label>
                 <div className="relative">
                   <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                   <input
                     type="text"
-                    placeholder="0000 0000 0000 0000"
+                    placeholder={t('payment.cardNumberPlaceholder')}
                     maxLength={19}
                     value={tarjeta.numero}
                     onChange={(e) => setTarjeta({ ...tarjeta, numero: formatTarjeta(e.target.value) })}
@@ -120,10 +122,10 @@ const PaymentModal = ({ total, onClose, onConfirm }) => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre en la tarjeta</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('payment.cardName')}</label>
                 <input
                   type="text"
-                  placeholder="NOMBRE APELLIDO"
+                  placeholder={t('payment.cardNamePlaceholder')}
                   value={tarjeta.nombre}
                   onChange={(e) => setTarjeta({ ...tarjeta, nombre: e.target.value.toUpperCase() })}
                   className="w-full px-4 py-3 border border-input-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-input-bg text-foreground placeholder-gray-400"
@@ -131,10 +133,10 @@ const PaymentModal = ({ total, onClose, onConfirm }) => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha de vencimiento</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('payment.expiration')}</label>
                   <input
                     type="text"
-                    placeholder="MM/AA"
+                    placeholder={t('payment.expirationPlaceholder')}
                     maxLength={5}
                     value={tarjeta.expiracion}
                     onChange={(e) => {
@@ -148,10 +150,10 @@ const PaymentModal = ({ total, onClose, onConfirm }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CVV</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('payment.cvv')}</label>
                   <input
                     type="password"
-                    placeholder="123"
+                    placeholder={t('payment.cvvPlaceholder')}
                     maxLength={4}
                     value={tarjeta.cvv}
                     onChange={(e) => setTarjeta({ ...tarjeta, cvv: e.target.value.replace(/\D/g, '') })}
@@ -170,10 +172,10 @@ const PaymentModal = ({ total, onClose, onConfirm }) => {
             {procesando ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Procesando...
+                {t('payment.processing')}
               </>
             ) : (
-              `Pagar $${total}`
+              t('payment.pay', { amount: total })
             )}
           </button>
         </div>

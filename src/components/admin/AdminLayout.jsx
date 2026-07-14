@@ -13,10 +13,13 @@ import {
   X,
   ShoppingCart
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import ThemeToggle from '../../components/common/ThemeToggle';
+import LanguageSelector from '../../components/common/LanguageSelector';
 
 const AdminLayout = () => {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -27,13 +30,13 @@ const AdminLayout = () => {
   };
 
   const menuItems = [
-    { to: '/admin', label: 'Panel Principal', icon: LayoutDashboard },
-    { to: '/admin/productos', label: 'Productos', icon: ShoppingBag },
-    { to: '/admin/usuarios', label: 'Usuarios', icon: Users },
-    { to: '/admin/graficas', label: 'Gráficas', icon: BarChart3 },
-    { to: '/admin/metricas', label: 'Métricas', icon: Activity },
-    { to: '/admin/reportes', label: 'Reportes', icon: FileText },
-    { to: '/admin/pruebas', label: 'Pruebas', icon: FlaskConical },
+    { to: '/admin', label: t('nav.admin.dashboard'), icon: LayoutDashboard },
+    { to: '/admin/productos', label: t('nav.admin.products'), icon: ShoppingBag },
+    { to: '/admin/usuarios', label: t('nav.admin.users'), icon: Users },
+    { to: '/admin/graficas', label: t('nav.admin.charts'), icon: BarChart3 },
+    { to: '/admin/metricas', label: t('nav.admin.metrics'), icon: Activity },
+    { to: '/admin/reportes', label: t('nav.admin.reports'), icon: FileText },
+    { to: '/admin/pruebas', label: t('nav.admin.tests'), icon: FlaskConical },
   ];
 
   return (
@@ -45,7 +48,7 @@ const AdminLayout = () => {
             <ShoppingCart className="text-purple-600" size={28} />
             <h1 className="text-xl font-bold text-foreground">TechStore AI</h1>
           </div>
-          <p className="text-xs text-muted mt-1">Panel de Administración</p>
+          <p className="text-xs text-muted mt-1">{t('nav.adminPanel')}</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
@@ -75,17 +78,18 @@ const AdminLayout = () => {
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">{user?.email}</p>
-              <p className="text-xs text-muted">Administrador</p>
+              <p className="text-xs text-muted">{t('roles.admin')}</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
+            <LanguageSelector className="flex-1" />
             <ThemeToggle className="flex-1 justify-center" />
             <button
               onClick={handleLogout}
               className="flex items-center justify-center space-x-2 flex-1 px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition"
             >
               <LogOut size={18} />
-              <span>Salir</span>
+              <span>{t('common.logout')}</span>
             </button>
           </div>
         </div>
@@ -132,7 +136,7 @@ const AdminLayout = () => {
           <button onClick={() => setSidebarOpen(true)}>
             <Menu size={24} className="text-foreground" />
           </button>
-          <h1 className="text-lg font-bold text-foreground">Admin</h1>
+          <h1 className="text-lg font-bold text-foreground">{t('roles.admin')}</h1>
           <button onClick={handleLogout}>
             <LogOut size={24} className="text-red-600" />
           </button>

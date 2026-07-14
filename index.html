@@ -11,6 +11,10 @@
         if (theme === 'dark') {
           document.documentElement.classList.add('dark');
         }
+        const lang = localStorage.getItem('techstore-lang');
+        if (lang === 'en') {
+          document.documentElement.lang = 'en';
+        }
       } catch (e) {
         // Ignorar errores de localStorage
       }

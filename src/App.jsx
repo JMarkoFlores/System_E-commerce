@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 import { useAuth } from './contexts/AuthContext';
 import { productosApi, pedidosApi } from './services/api';
@@ -40,6 +41,7 @@ const normalizarProducto = (p) => ({
 });
 
 function App() {
+  const { t } = useTranslation();
   const { user, loading } = useAuth();
 
   const [productos, setProductos] = useState([]);
@@ -112,13 +114,13 @@ function App() {
   // Carrito
   const agregarAlCarrito = (producto) => {
     setCarrito([...carrito, producto]);
-    mostrarToast(`${producto.nombre} agregado al carrito`, 'success');
+    mostrarToast(t('errors.addedToCart', { product: producto.nombre }), 'success');
   };
 
   const removerDelCarrito = (index) => {
     const producto = carrito[index];
     setCarrito(carrito.filter((_, i) => i !== index));
-    mostrarToast(`${producto.nombre} eliminado del carrito`, 'error');
+    mostrarToast(t('errors.removedFromCart', { product: producto.nombre }), 'error');
   };
 
   const mostrarToast = (mensaje, tipo = 'success') => {
@@ -178,17 +180,17 @@ function App() {
       setMostrarPago(false);
       setItemsPago([]);
 
-      mostrarToast('✅ Compra realizada exitosamente', 'success');
+      mostrarToast(`✅ ${t('errors.purchaseSuccess')}`, 'success');
     } catch (err) {
       console.error('Error en pago:', err);
-      const mensaje = err.response?.data?.detail || 'Error al procesar el pago';
+      const mensaje = err.response?.data?.detail || t('errors.paymentError');
       alert(`❌ ${mensaje}`);
     }
   };
 
   // Rutas protegidas
   const ProtectedRoute = ({ children, rol }) => {
-    if (loading) return <div className="min-h-screen flex items-center justify-center">Cargando...</div>;
+    if (loading) return <div className="min-h-screen flex items-center justify-center">{t('common.loading')}</div>;
     if (!user) return <Navigate to="/" replace />;
     if (rol && user.role !== rol) return <Navigate to="/" replace />;
     return children;

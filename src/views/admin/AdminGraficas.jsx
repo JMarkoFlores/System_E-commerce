@@ -6,6 +6,7 @@ import {
 import {
   TrendingUp, DollarSign, ShoppingBag, Award, BarChart3,
 } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 import { EMOJI_CATEGORIAS } from "../../utils/productos";
 import { useTheme } from "../../contexts/ThemeContext";
 
@@ -14,6 +15,7 @@ const COLORES = [
 ];
 
 const AdminGraficas = ({ historialCompras }) => {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const datosGraficas = useMemo(() => {
@@ -104,8 +106,8 @@ const AdminGraficas = ({ historialCompras }) => {
     return (
       <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-8 text-center">
         <BarChart3 size={64} className="mx-auto mb-4 text-yellow-500" />
-        <h3 className="text-2xl font-bold text-foreground mb-2">No hay datos para mostrar</h3>
-        <p className="text-muted">Realiza algunas compras para ver las estadísticas y gráficas.</p>
+        <h3 className="text-2xl font-bold text-foreground mb-2">{t('charts.noData')}</h3>
+        <p className="text-muted">{t('charts.noDataHint')}</p>
       </div>
     );
   }
@@ -116,23 +118,23 @@ const AdminGraficas = ({ historialCompras }) => {
         <div className="flex items-center space-x-3">
           <BarChart3 size={40} />
           <div>
-            <h2 className="text-3xl font-bold">Análisis de Compras</h2>
-            <p className="text-purple-100">Visualiza los patrones de consumo de los clientes</p>
+            <h2 className="text-3xl font-bold">{t('charts.title')}</h2>
+            <p className="text-purple-100">{t('charts.subtitle')}</p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <TarjetaEstadistica icono={ShoppingBag} titulo="Total de Compras" valor={`${datosGraficas.totalProductos} productos`} color="from-purple-500 to-purple-600" />
-        <TarjetaEstadistica icono={DollarSign} titulo="Gasto Total" valor={`$${datosGraficas.totalGastado.toLocaleString()}`} color="from-blue-500 to-blue-600" />
-        <TarjetaEstadistica icono={Award} titulo="Categoría Favorita" valor={`${datosGraficas.categorias[0]?.emoji} ${datosGraficas.categorias[0]?.nombre}`} color="from-green-500 to-green-600" />
-        <TarjetaEstadistica icono={TrendingUp} titulo="Promedio por Compra" valor={`$${Math.round(datosGraficas.totalGastado / datosGraficas.totalProductos)}`} color="from-orange-500 to-orange-600" />
+        <TarjetaEstadistica icono={ShoppingBag} titulo={t('charts.totalPurchases')} valor={`${datosGraficas.totalProductos} ${t('common.products')}`} color="from-purple-500 to-purple-600" />
+        <TarjetaEstadistica icono={DollarSign} titulo={t('charts.totalSpent')} valor={`$${datosGraficas.totalGastado.toLocaleString()}`} color="from-blue-500 to-blue-600" />
+        <TarjetaEstadistica icono={Award} titulo={t('charts.favoriteCategory')} valor={`${datosGraficas.categorias[0]?.emoji} ${datosGraficas.categorias[0]?.nombre}`} color="from-green-500 to-green-600" />
+        <TarjetaEstadistica icono={TrendingUp} titulo={t('charts.averagePerPurchase')} valor={`$${Math.round(datosGraficas.totalGastado / datosGraficas.totalProductos)}`} color="from-orange-500 to-orange-600" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-surface rounded-lg shadow-lg p-6 border border-border">
           <h3 className="text-xl font-bold text-foreground mb-4 flex items-center">
-            <ShoppingBag className="mr-2 text-purple-600" size={24} /> Productos por Categoría
+            <ShoppingBag className="mr-2 text-purple-600" size={24} /> {t('charts.productsByCategory')}
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={datosGraficas.categorias}>
@@ -149,7 +151,7 @@ const AdminGraficas = ({ historialCompras }) => {
 
         <div className="bg-surface rounded-lg shadow-lg p-6 border border-border">
           <h3 className="text-xl font-bold text-foreground mb-4 flex items-center">
-            <TrendingUp className="mr-2 text-blue-600" size={24} /> Distribución de Compras
+            <TrendingUp className="mr-2 text-blue-600" size={24} /> {t('charts.purchaseDistribution')}
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -163,7 +165,7 @@ const AdminGraficas = ({ historialCompras }) => {
 
         <div className="bg-surface rounded-lg shadow-lg p-6 border border-border">
           <h3 className="text-xl font-bold text-foreground mb-4 flex items-center">
-            <DollarSign className="mr-2 text-green-600" size={24} /> Gasto Total por Categoría
+            <DollarSign className="mr-2 text-green-600" size={24} /> {t('charts.spendingByCategory')}
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={datosGraficas.gastoPorCategoria} layout="vertical">
@@ -180,7 +182,7 @@ const AdminGraficas = ({ historialCompras }) => {
 
         <div className="bg-surface rounded-lg shadow-lg p-6 border border-border">
           <h3 className="text-xl font-bold text-foreground mb-4 flex items-center">
-            <TrendingUp className="mr-2 text-orange-600" size={24} /> Evolución de Compras
+            <TrendingUp className="mr-2 text-orange-600" size={24} /> {t('charts.purchaseEvolution')}
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={datosGraficas.evolucionCompras}>
@@ -199,17 +201,17 @@ const AdminGraficas = ({ historialCompras }) => {
 
       <div className="bg-surface rounded-lg shadow-lg p-6 border border-border">
         <h3 className="text-xl font-bold text-foreground mb-4 flex items-center">
-          <Award className="mr-2 text-yellow-600" size={24} /> Top Productos Más Comprados
+          <Award className="mr-2 text-yellow-600" size={24} /> {t('charts.topProducts')}
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Ranking</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Producto</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Categoría</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Cantidad</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Total Gastado</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t('charts.ranking')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t('charts.product')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t('common.category')}</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t('common.quantity')}</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t('charts.totalSpentLabel')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">

@@ -1,8 +1,10 @@
 import React from 'react';
 import { TrendingUp, Star, Zap, Brain } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import ProductImage from '../../components/common/ProductImage';
 
 const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuyNow, estadisticasIA }) => {
+  const { t } = useTranslation();
   return (
     <div>
       {/* Banner de IA */}
@@ -11,21 +13,21 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
           <div className="flex items-center space-x-3">
             <Brain size={32} className="animate-pulse" />
             <div>
-              <h2 className="text-2xl font-bold">Recomendaciones Personalizadas con IA</h2>
+              <h2 className="text-2xl font-bold">{t('recommendations.title')}</h2>
               <p className="text-purple-100 text-sm">
-                Red Neuronal Artificial • Generación #{estadisticasIA?.generacion || 0} • Aprendizaje continuo
+                {t('recommendations.subtitle', { generation: estadisticasIA?.generacion || 0 })}
               </p>
             </div>
           </div>
           {historialCompras.length > 0 && (
             <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
-              <div className="text-xs text-purple-100">Precisión del modelo</div>
+              <div className="text-xs text-purple-100">{t('recommendations.modelAccuracy')}</div>
               <div className="text-2xl font-bold">{Math.min(85 + historialCompras.length * 2, 99)}%</div>
             </div>
           )}
         </div>
         <p className="text-purple-100">
-          El sistema aprende de cada compra para mejorar las recomendaciones
+          {t('recommendations.description')}
         </p>
       </div>
 
@@ -33,10 +35,10 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-8 text-center">
           <Star size={48} className="mx-auto mb-4 text-yellow-500" />
           <h3 className="text-xl font-bold text-foreground mb-2">
-            ¡Comienza a comprar para obtener recomendaciones!
+            {t('recommendations.emptyTitle')}
           </h3>
           <p className="text-muted">
-            La IA aprenderá de tus preferencias y te sugerirá productos personalizados
+            {t('recommendations.emptyDescription')}
           </p>
         </div>
       ) : (
@@ -46,7 +48,7 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
             <div className="bg-surface rounded-lg shadow p-4 border-l-4 border-purple-500">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted">Compras analizadas</p>
+                  <p className="text-xs text-muted">{t('recommendations.analyzedPurchases')}</p>
                   <p className="text-2xl font-bold text-foreground">{historialCompras.length}</p>
                 </div>
                 <TrendingUp className="text-purple-500" size={24} />
@@ -56,7 +58,7 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
             <div className="bg-surface rounded-lg shadow p-4 border-l-4 border-blue-500">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted">Categorías exploradas</p>
+                  <p className="text-xs text-muted">{t('recommendations.exploredCategories')}</p>
                   <p className="text-2xl font-bold text-foreground">
                     {new Set(historialCompras.map(h => h.categoria)).size}
                   </p>
@@ -68,7 +70,7 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
             <div className="bg-surface rounded-lg shadow p-4 border-l-4 border-green-500">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted">Recomendaciones activas</p>
+                  <p className="text-xs text-muted">{t('recommendations.activeRecommendations')}</p>
                   <p className="text-2xl font-bold text-foreground">{recomendaciones.length}</p>
                 </div>
                 <Zap className="text-green-500" size={24} />
@@ -78,7 +80,7 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
             <div className="bg-surface rounded-lg shadow p-4 border-l-4 border-orange-500">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted">Generación IA</p>
+                  <p className="text-xs text-muted">{t('recommendations.aiGeneration')}</p>
                   <p className="text-2xl font-bold text-foreground">#{estadisticasIA?.generacion || 0}</p>
                 </div>
                 <Brain className="text-orange-500" size={24} />
@@ -89,10 +91,10 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
           {/* Productos recomendados */}
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-foreground">
-              🎯 Productos seleccionados especialmente para ti
+              🎯 {t('recommendations.selectedForYou')}
             </h3>
             <span className="text-sm text-muted">
-              Actualizadas en tiempo real
+              {t('recommendations.updatedRealtime')}
             </span>
           </div>
 
@@ -103,13 +105,13 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
                 {index < 3 && (
                   <div className="absolute top-2 left-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center space-x-1 z-10">
                     <Star size={12} fill="currentColor" />
-                    <span>Top {index + 1}</span>
+                    <span>{t('recommendations.top', { rank: index + 1 })}</span>
                   </div>
                 )}
 
                 {/* Badge de categoría */}
                 <span className="absolute top-2 right-2 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 text-xs font-semibold px-3 py-1 rounded-full z-10">
-                  {producto.categoria}
+                  {t(`categories.${producto.categoria}`, { defaultValue: producto.categoria })}
                 </span>
 
                 {/* Imagen del producto */}
@@ -128,14 +130,14 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
                   {/* Razón de recomendación */}
                   <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900/50 rounded-lg p-2 mb-3">
                     <p className="text-xs text-blue-800 dark:text-blue-200 font-medium">
-                      💡 {producto.razon || 'Recomendado para ti'}
+                      💡 {producto.razon || t('recommendations.recommendedForYou')}
                     </p>
                   </div>
 
                   {/* Score de IA */}
                   <div className="mb-4">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-muted font-semibold">Nivel de coincidencia:</span>
+                      <span className="text-xs text-muted font-semibold">{t('recommendations.matchLevel')}:</span>
                       <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
                         {(producto.score * 100).toFixed(0)}%
                       </span>
@@ -165,13 +167,13 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
                       onClick={() => onAddToCart(producto)}
                       className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition font-semibold shadow-md hover:shadow-lg"
                     >
-                      🛒 Carrito
+                      🛒 {t('catalog.addToCart')}
                     </button>
                     <button
                       onClick={() => onBuyNow(producto)}
                       className="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white py-2.5 rounded-lg hover:from-green-700 hover:to-green-800 transition font-semibold shadow-md hover:shadow-lg"
                     >
-                      Comprar
+                      {t('catalog.buyNow')}
                     </button>
                   </div>
                 </div>
@@ -184,16 +186,16 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
             <div className="flex items-start space-x-4">
               <Brain size={32} className="text-purple-600 dark:text-purple-400 flex-shrink-0" />
               <div>
-                <h4 className="font-bold text-foreground mb-2">¿Cómo funciona el sistema de recomendaciones?</h4>
+                <h4 className="font-bold text-foreground mb-2">{t('recommendations.howItWorks')}</h4>
                 <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                  Nuestra Red Neuronal Artificial analiza tus compras en tiempo real y aprende de tus preferencias:
+                  {t('recommendations.howItWorksDescription')}
                 </p>
                 <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                  <li>✓ Detecta patrones en las categorías que prefieres</li>
-                  <li>✓ Analiza tu rango de precios habitual</li>
-                  <li>✓ Identifica tags y características comunes</li>
-                  <li>✓ Cada compra mejora la precisión del modelo</li>
-                  <li>✓ Las recomendaciones se actualizan instantáneamente</li>
+                  <li>✓ {t('recommendations.patterns')}</li>
+                  <li>✓ {t('recommendations.priceRange')}</li>
+                  <li>✓ {t('recommendations.commonTags')}</li>
+                  <li>✓ {t('recommendations.improves')}</li>
+                  <li>✓ {t('recommendations.instant')}</li>
                 </ul>
               </div>
             </div>

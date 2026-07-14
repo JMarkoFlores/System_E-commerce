@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { ShoppingCart, Star } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { EMOJI_CATEGORIAS } from '../../utils/productos';
 
 const ProductCard = ({ producto, onAddToCart, onBuyNow }) => {
+  const { t } = useTranslation();
   const [imagenCargada, setImagenCargada] = useState(true);
   const [imagenError, setImagenError] = useState(false);
 
@@ -51,7 +53,7 @@ const ProductCard = ({ producto, onAddToCart, onBuyNow }) => {
         
         {/* Badge de categoría */}
         <span className="absolute top-3 right-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-purple-800 dark:text-purple-200 text-xs font-bold px-3 py-1 rounded-full shadow-lg z-20">
-          {producto.categoria}
+          {t(`categories.${producto.categoria}`, { defaultValue: producto.categoria })}
         </span>
       </div>
       
@@ -87,13 +89,13 @@ const ProductCard = ({ producto, onAddToCart, onBuyNow }) => {
             className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-semibold shadow-md hover:shadow-lg flex items-center justify-center space-x-1"
           >
             <ShoppingCart size={16} />
-            <span>Carrito</span>
+            <span>{t('catalog.addToCart')}</span>
           </button>
           <button
             onClick={() => onBuyNow(producto)}
             className="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white py-2.5 rounded-lg hover:from-green-700 hover:to-green-800 transition-all font-semibold shadow-md hover:shadow-lg"
           >
-            Comprar
+            {t('catalog.buyNow')}
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@ import {
   LayoutDashboard, DollarSign, ShoppingCart, Users, Package,
   TrendingUp, TrendingDown, MoreHorizontal
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
@@ -11,6 +12,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import ProductImage from '../../components/common/ProductImage';
 
 const AdminDashboard = () => {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [reporte, setReporte] = useState(null);
@@ -56,10 +58,10 @@ const AdminDashboard = () => {
   }
 
   const kpis = [
-    { titulo: 'Ventas Totales', valor: `$${(reporte?.total_ingresos || 0).toLocaleString()}`, icono: DollarSign, color: 'from-purple-500 to-purple-600', trend: '+12%' },
-    { titulo: 'Total Pedidos', valor: reporte?.total_pedidos || 0, icono: ShoppingCart, color: 'from-blue-500 to-blue-600', trend: '+8%' },
-    { titulo: 'Clientes Registrados', valor: reporte?.total_usuarios || 0, icono: Users, color: 'from-green-500 to-green-600', trend: '+15%' },
-    { titulo: 'Productos con Bajo Stock', valor: '<10', icono: Package, color: 'from-red-500 to-red-600', trend: '-3%' },
+    { titulo: t('dashboard.totalSales'), valor: `$${(reporte?.total_ingresos || 0).toLocaleString()}`, icono: DollarSign, color: 'from-purple-500 to-purple-600', trend: '+12%' },
+    { titulo: t('dashboard.totalOrders'), valor: reporte?.total_pedidos || 0, icono: ShoppingCart, color: 'from-blue-500 to-blue-600', trend: '+8%' },
+    { titulo: t('dashboard.registeredCustomers'), valor: reporte?.total_usuarios || 0, icono: Users, color: 'from-green-500 to-green-600', trend: '+15%' },
+    { titulo: t('dashboard.lowStock'), valor: '<10', icono: Package, color: 'from-red-500 to-red-600', trend: '-3%' },
   ];
 
   // Datos de ejemplo para gráfica semanal si no hay ventas por día
@@ -84,9 +86,9 @@ const AdminDashboard = () => {
         <div>
           <h2 className="text-3xl font-bold text-foreground flex items-center">
             <LayoutDashboard className="mr-3 text-purple-600" size={32} />
-            Panel Principal
+            {t('dashboard.title')}
           </h2>
-          <p className="text-muted mt-1">Resumen general del negocio</p>
+          <p className="text-muted mt-1">{t('dashboard.subtitle')}</p>
         </div>
       </div>
 
@@ -104,7 +106,7 @@ const AdminDashboard = () => {
                   ) : (
                     <TrendingDown size={16} className="mr-1" />
                   )}
-                  <span>{kpi.trend} este mes</span>
+                  <span>{kpi.trend.startsWith('+') ? t('dashboard.trendUp', { value: kpi.trend.slice(1) }) : t('dashboard.trendDown', { value: kpi.trend })}</span>
                 </div>
               </div>
               <div className="bg-white/20 p-3 rounded-lg">
@@ -119,7 +121,7 @@ const AdminDashboard = () => {
         {/* Gráfica de ventas */}
         <div className="lg:col-span-2 bg-surface rounded-xl shadow-lg p-6 border border-border">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-foreground">Ventas de la Semana</h3>
+            <h3 className="text-xl font-bold text-foreground">{t('dashboard.weeklySales')}</h3>
             <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
               <MoreHorizontal size={20} className="text-gray-400" />
             </button>
@@ -140,9 +142,9 @@ const AdminDashboard = () => {
 
         {/* Pedidos recientes */}
         <div className="bg-surface rounded-xl shadow-lg p-6 border border-border">
-          <h3 className="text-xl font-bold text-foreground mb-4">Pedidos Recientes</h3>
+          <h3 className="text-xl font-bold text-foreground mb-4">{t('dashboard.recentOrders')}</h3>
           {pedidos.length === 0 ? (
-            <p className="text-muted text-center py-8">No hay pedidos registrados</p>
+            <p className="text-muted text-center py-8">{t('dashboard.noOrders')}</p>
           ) : (
             <div className="space-y-4 max-h-80 overflow-y-auto">
               {pedidos.map((pedido) => (
@@ -167,16 +169,16 @@ const AdminDashboard = () => {
 
       {/* Productos populares */}
       <div className="bg-surface rounded-xl shadow-lg p-6 border border-border">
-        <h3 className="text-xl font-bold text-foreground mb-4">Productos Populares</h3>
+        <h3 className="text-xl font-bold text-foreground mb-4">{t('dashboard.popularProducts')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {reporte?.categorias_top?.slice(0, 4).map((cat, index) => (
             <div key={index} className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg p-4 border border-purple-100 dark:border-purple-900/30">
               <p className="text-sm text-muted">{cat.categoria}</p>
               <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{cat.cantidad}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">ventas • ${cat.total.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.sales')} • ${cat.total.toLocaleString()}</p>
             </div>
           )) || (
-            <p className="text-muted col-span-4 text-center py-4">Aún no hay datos de ventas por categoría</p>
+            <p className="text-muted col-span-4 text-center py-4">{t('dashboard.noOrders')}</p>
           )}
         </div>
       </div>

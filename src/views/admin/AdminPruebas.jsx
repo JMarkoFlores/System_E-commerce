@@ -14,6 +14,7 @@ import {
   Sigma,
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import {
   BarChart,
   Bar,
@@ -44,6 +45,7 @@ import { RedNeuronalEvaluator } from '../../utils/RedNeuronalWrapper';
 
 const AdminPruebas = () => {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const isDark = theme === 'dark';
 
   const [config, setConfig] = useState({
@@ -79,7 +81,7 @@ const AdminPruebas = () => {
 
     try {
       // 1. Generar datos sintéticos
-      setProgreso('Generando usuarios sintéticos...');
+      setProgreso(t('tests.generatingUsers'));
       const usuarios = generarUsuariosSinteticos(config.usuarios, config.seed, {
         minCompras: 4,
         maxCompras: 18,
@@ -87,7 +89,7 @@ const AdminPruebas = () => {
       const statsDataset = estadisticasDataset(usuarios);
 
       // 2. Crear recomendadores
-      setProgreso('Inicializando modelos...');
+      setProgreso(t('tests.initializing'));
       const redNeuronal = new RedNeuronalEvaluator();
       const random = new RandomRecommender(config.seed);
       const popularity = new PopularityRecommender();
@@ -95,10 +97,10 @@ const AdminPruebas = () => {
       const categoryFav = new CategoryFavoriteRecommender();
 
       // 3. Evaluar cada modelo
-      setProgreso('Evaluando Red Neuronal (esto puede tardar)...');
+      setProgreso(t('tests.evaluatingNN'));
       const resultadoRN = await evaluarRecomendador(redNeuronal, usuarios, config.k);
 
-      setProgreso('Evaluando baselines...');
+      setProgreso(t('tests.evaluatingBaselines'));
       const [resultadoRandom, resultadoPopularity, resultadoContent, resultadoCategory] =
         await Promise.all([
           evaluarRecomendador(random, usuarios, config.k),
@@ -115,11 +117,11 @@ const AdminPruebas = () => {
       };
 
       // 4. Intervalos de confianza para Red Neuronal
-      setProgreso('Calculando intervalos de confianza...');
+      setProgreso(t('tests.calculatingCI'));
       const intervalosRN = intervalosConfianzaPorMetrica(resultadoRN, 1000);
 
       // 5. Tests estadísticos
-      setProgreso('Ejecutando tests estadísticos...');
+      setProgreso(t('tests.runningTests'));
       const testsPorMetrica = {};
       metricasParaTests.forEach((metrica) => {
         testsPorMetrica[metrica] = compararConBaselines(
@@ -139,7 +141,7 @@ const AdminPruebas = () => {
       });
     } catch (err) {
       console.error('Error en evaluación:', err);
-      setError('Error ejecutando evaluación: ' + err.message);
+      setError(t('tests.error') + ': ' + err.message);
     } finally {
       setCargando(false);
       setProgreso('');
@@ -153,37 +155,37 @@ const AdminPruebas = () => {
 
     // Hoja 1: Dataset
     const wsDataset = XLSX.utils.json_to_sheet([
-      { metrica: 'Usuarios sintéticos', valor: resultados.statsDataset.totalUsuarios },
-      { metrica: 'Total compras', valor: resultados.statsDataset.totalCompras },
-      { metrica: 'Promedio compras/usuario', valor: resultados.statsDataset.promedioCompras },
+      { metrica: t('tests.syntheticUsers'), valor: resultados.statsDataset.totalUsuarios },
+      { metrica: t('tests.totalPurchases'), valor: resultados.statsDataset.totalCompras },
+      { metrica: t('tests.purchasesPerUser'), valor: resultados.statsDataset.promedioCompras },
       ...Object.entries(resultados.statsDataset.comprasPorCategoria).map(([cat, val]) => ({
-        metrica: `Compras ${cat}`,
+        metrica: `${t('tests.categoryDistribution')} ${cat}`,
         valor: val,
       })),
     ]);
-    XLSX.utils.book_append_sheet(wb, wsDataset, 'Dataset');
+    XLSX.utils.book_append_sheet(wb, wsDataset, t('tests.sheetDataset'));
 
     // Hoja 2: Métricas comparativas
     const filasMetricas = metricasVisibles.map((m) => {
-      const fila = { Metrica: m.label };
-      fila['Red Neuronal'] = formatear(resultados.resultadoRN[m.key], m.sufijo);
+      const fila = { [t('tests.metric')]: m.label };
+      fila[t('tests.neuralNetwork')] = formatear(resultados.resultadoRN[m.key], m.sufijo);
       Object.entries(resultados.resultadosBaselines).forEach(([nombre, res]) => {
         fila[nombre] = formatear(res[m.key], m.sufijo);
       });
       return fila;
     });
     const wsMetricas = XLSX.utils.json_to_sheet(filasMetricas);
-    XLSX.utils.book_append_sheet(wb, wsMetricas, 'Metricas');
+    XLSX.utils.book_append_sheet(wb, wsMetricas, t('tests.sheetMetrics'));
 
     // Hoja 3: Intervalos de confianza Red Neuronal
     const filasIC = Object.entries(resultados.intervalosRN).map(([key, ic]) => ({
-      Metrica: key,
-      Media: ic.media,
-      'IC 95% Inferior': ic.lower,
-      'IC 95% Superior': ic.upper,
+      [t('tests.metric')]: key,
+      [t('tests.mean')]: ic.media,
+      [t('tests.ciLower')]: ic.lower,
+      [t('tests.ciUpper')]: ic.upper,
     }));
     const wsIC = XLSX.utils.json_to_sheet(filasIC);
-    XLSX.utils.book_append_sheet(wb, wsIC, 'Intervalos Confianza');
+    XLSX.utils.book_append_sheet(wb, wsIC, t('tests.sheetCI'));
 
     // Hoja 4: Tests estadísticos
     const filasTests = [];
@@ -191,21 +193,21 @@ const AdminPruebas = () => {
       const label = metricasVisibles.find((m) => m.key === metrica)?.label || metrica;
       Object.entries(resultados.testsPorMetrica[metrica]).forEach(([baseline, test]) => {
         filasTests.push({
-          Metrica: label,
-          Baseline: baseline,
-          'T-Statistic': test.ttest.tStatistic.toFixed(4),
-          'T-Test p-value': test.ttest.pValue.toFixed(4),
-          'T-Test Significativo': test.ttest.significant ? 'Sí' : 'No',
+          [t('tests.metric')]: label,
+          [t('tests.baseline')]: baseline,
+          [t('tests.tStatistic')]: test.ttest.tStatistic.toFixed(4),
+          [t('tests.tTestPValue')]: test.ttest.pValue.toFixed(4),
+          [t('tests.significant')]: test.ttest.significant ? t('tests.significantYes') : t('tests.significantNo'),
           'Wilcoxon Z': test.wilcoxon.zStatistic.toFixed(4),
-          'Wilcoxon p-value': test.wilcoxon.pValue.toFixed(4),
-          'Wilcoxon Significativo': test.wilcoxon.significant ? 'Sí' : 'No',
-          "Cohen's d": test.cohensD.toFixed(4),
+          [t('tests.wilcoxonPValue')]: test.wilcoxon.pValue.toFixed(4),
+          [t('common.none')]: test.wilcoxon.significant ? t('tests.significantYes') : t('tests.significantNo'),
+          [t('tests.cohensD')]: test.cohensD.toFixed(4),
           Interpretacion: test.interpretacion,
         });
       });
     });
     const wsTests = XLSX.utils.json_to_sheet(filasTests);
-    XLSX.utils.book_append_sheet(wb, wsTests, 'Tests Estadisticos');
+    XLSX.utils.book_append_sheet(wb, wsTests, t('tests.sheetTests'));
 
     XLSX.writeFile(wb, `evaluacion-modelo-ia-${new Date().toISOString().split('T')[0]}.xlsx`);
   };
@@ -270,10 +272,10 @@ const AdminPruebas = () => {
       <div>
         <h2 className="text-3xl font-bold text-foreground flex items-center">
           <FlaskConical className="mr-3 text-purple-600" size={32} />
-          Módulo de Pruebas
+          {t('tests.title')}
         </h2>
         <p className="text-muted mt-1">
-          Evaluación estadística robusta del modelo de recomendación con IA
+          {t('tests.subtitle')}
         </p>
       </div>
 
@@ -281,13 +283,13 @@ const AdminPruebas = () => {
       <div className="bg-surface rounded-xl shadow-lg p-6 border border-border">
         <h3 className="text-lg font-bold text-foreground mb-4 flex items-center">
           <Target className="mr-2 text-purple-600" size={20} />
-          Configuración de la evaluación
+          {t('tests.config')}
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Usuarios sintéticos
+              {t('tests.syntheticUsers')}
             </label>
             <input
               type="number"
@@ -297,11 +299,11 @@ const AdminPruebas = () => {
               onChange={(e) => setConfig({ ...config, usuarios: parseInt(e.target.value) || 40 })}
               className="w-full px-3 py-2 border border-input-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-input-bg text-foreground placeholder-gray-400"
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Recomendado: ≥30 para t-test válido</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('tests.usersHint')}</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Top-K</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('tests.topK')}</label>
             <input
               type="number"
               min="1"
@@ -310,18 +312,18 @@ const AdminPruebas = () => {
               onChange={(e) => setConfig({ ...config, k: parseInt(e.target.value) || 10 })}
               className="w-full px-3 py-2 border border-input-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-input-bg text-foreground placeholder-gray-400"
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Número de recomendaciones a evaluar</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('tests.topKHint')}</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Semilla</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('tests.seed')}</label>
             <input
               type="number"
               value={config.seed}
               onChange={(e) => setConfig({ ...config, seed: parseInt(e.target.value) || 42 })}
               className="w-full px-3 py-2 border border-input-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-input-bg text-foreground placeholder-gray-400"
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Para reproducibilidad</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('tests.seedHint')}</p>
           </div>
         </div>
 
@@ -336,7 +338,7 @@ const AdminPruebas = () => {
             ) : (
               <Play size={18} />
             )}
-            <span>{cargando ? 'Evaluando...' : 'Ejecutar evaluación'}</span>
+            <span>{cargando ? t('tests.running') : t('tests.run')}</span>
           </button>
 
           {resultados && (
@@ -345,7 +347,7 @@ const AdminPruebas = () => {
               className="flex items-center space-x-2 px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
             >
               <Download size={18} />
-              <span>Exportar Excel</span>
+              <span>{t('tests.exportExcel')}</span>
             </button>
           )}
         </div>
@@ -372,30 +374,30 @@ const AdminPruebas = () => {
           <div className="bg-surface rounded-xl shadow-lg p-6 border border-border">
             <h3 className="text-lg font-bold text-foreground mb-4 flex items-center">
               <Users className="mr-2 text-blue-600" size={20} />
-              Dataset sintético generado
+              {t('tests.dataset')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-                <p className="text-sm text-blue-700 dark:text-blue-300">Usuarios</p>
+                <p className="text-sm text-blue-700 dark:text-blue-300">{t('tests.users')}</p>
                 <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
                   {resultados.statsDataset.totalUsuarios}
                 </p>
               </div>
               <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
-                <p className="text-sm text-green-700 dark:text-green-300">Total compras</p>
+                <p className="text-sm text-green-700 dark:text-green-300">{t('tests.totalPurchases')}</p>
                 <p className="text-2xl font-bold text-green-900 dark:text-green-100">
                   {resultados.statsDataset.totalCompras}
                 </p>
               </div>
               <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
-                <p className="text-sm text-purple-700 dark:text-purple-300">Compras / usuario</p>
+                <p className="text-sm text-purple-700 dark:text-purple-300">{t('tests.purchasesPerUser')}</p>
                 <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
                   {resultados.statsDataset.promedioCompras}
                 </p>
               </div>
             </div>
             <div className="mt-4">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Distribución por categoría:</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('tests.categoryDistribution')}:</p>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(resultados.statsDataset.comprasPorCategoria).map(
                   ([cat, val]) => (
@@ -415,15 +417,15 @@ const AdminPruebas = () => {
           <div className="bg-surface rounded-xl shadow-lg p-6 border border-border">
             <h3 className="text-lg font-bold text-foreground mb-4 flex items-center">
               <BarChart3 className="mr-2 text-purple-600" size={20} />
-              Comparación de modelos
+              {t('tests.modelComparison')}
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Métrica</th>
+                    <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">{t('tests.metric')}</th>
                     <th className="px-4 py-3 text-center font-semibold text-purple-700 dark:text-purple-400">
-                      Red Neuronal
+                      {t('tests.neuralNetwork')}
                     </th>
                     {Object.keys(resultados.resultadosBaselines).map((nombre) => (
                       <th key={nombre} className="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-300">
@@ -456,7 +458,7 @@ const AdminPruebas = () => {
             <div className="bg-surface rounded-xl shadow-lg p-6 border border-border">
               <h3 className="text-lg font-bold text-foreground mb-4 flex items-center">
                 <TrendingUp className="mr-2 text-blue-600" size={20} />
-                Comparación de métricas
+                {t('tests.metricsComparison')}
               </h3>
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={datosComparativos}>
@@ -480,7 +482,7 @@ const AdminPruebas = () => {
             <div className="bg-surface rounded-xl shadow-lg p-6 border border-border">
               <h3 className="text-lg font-bold text-foreground mb-4 flex items-center">
                 <Brain className="mr-2 text-purple-600" size={20} />
-                Radar de rendimiento
+                {t('tests.performanceRadar')}
               </h3>
               <ResponsiveContainer width="100%" height={350}>
                 <RadarChart data={datosRadar}>
@@ -508,19 +510,19 @@ const AdminPruebas = () => {
           <div className="bg-surface rounded-xl shadow-lg p-6 border border-border">
             <h3 className="text-lg font-bold text-foreground mb-4 flex items-center">
               <Sigma className="mr-2 text-indigo-600" size={20} />
-              Intervalos de confianza 95% - Red Neuronal
+              {t('tests.confidenceIntervals')}
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Métrica</th>
-                    <th className="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-300">Media</th>
+                    <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">{t('tests.metric')}</th>
+                    <th className="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-300">{t('tests.mean')}</th>
                     <th className="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-300">
-                      IC 95% Inferior
+                      {t('tests.ciLower')}
                     </th>
                     <th className="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-300">
-                      IC 95% Superior
+                      {t('tests.ciUpper')}
                     </th>
                   </tr>
                 </thead>
@@ -549,11 +551,10 @@ const AdminPruebas = () => {
           <div className="bg-surface rounded-xl shadow-lg p-6 border border-border">
             <h3 className="text-lg font-bold text-foreground mb-4 flex items-center">
               <CheckCircle className="mr-2 text-green-600" size={20} />
-              Tests de significancia estadística
+              {t('tests.significanceTests')}
             </h3>
             <p className="text-sm text-muted mb-4">
-              Comparación de la Red Neuronal contra cada baseline. p-value {'<'} 0.05 indica
-              diferencia estadísticamente significativa.
+              {t('tests.significanceHint')}
             </p>
 
             {metricasParaTests.map((metrica) => {
@@ -566,22 +567,22 @@ const AdminPruebas = () => {
                       <thead className="bg-gray-50 dark:bg-gray-800">
                         <tr>
                           <th className="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
-                            Baseline
+                            {t('tests.baseline')}
                           </th>
                           <th className="px-4 py-2 text-center font-semibold text-gray-700 dark:text-gray-300">
-                            t-statistic
+                            {t('tests.tStatistic')}
                           </th>
                           <th className="px-4 py-2 text-center font-semibold text-gray-700 dark:text-gray-300">
-                            t-test p-value
+                            {t('tests.tTestPValue')}
                           </th>
                           <th className="px-4 py-2 text-center font-semibold text-gray-700 dark:text-gray-300">
-                            Wilcoxon p-value
+                            {t('tests.wilcoxonPValue')}
                           </th>
                           <th className="px-4 py-2 text-center font-semibold text-gray-700 dark:text-gray-300">
-                            Cohen's d
+                            {t('tests.cohensD')}
                           </th>
                           <th className="px-4 py-2 text-center font-semibold text-gray-700 dark:text-gray-300">
-                            Significativo
+                            {t('tests.significant')}
                           </th>
                         </tr>
                       </thead>
@@ -605,11 +606,11 @@ const AdminPruebas = () => {
                               <td className="px-4 py-2 text-center">
                                 {test.ttest.significant || test.wilcoxon.significant ? (
                                   <span className="inline-flex items-center px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs font-semibold">
-                                    <CheckCircle size={12} className="mr-1" /> Sí
+                                    <CheckCircle size={12} className="mr-1" /> {t('tests.significantYes')}
                                   </span>
                                 ) : (
                                   <span className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full text-xs font-semibold">
-                                    No
+                                    {t('tests.significantNo')}
                                   </span>
                                 )}
                               </td>

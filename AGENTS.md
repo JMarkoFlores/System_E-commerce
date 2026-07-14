@@ -325,3 +325,43 @@ El módulo `AdminPruebas` permite evaluar estadísticamente el modelo de recomen
 - Mejorar manejo de errores y estados de carga.
 - Normalizar categorías duplicadas en el catálogo.
 - Implementar paginación en listados.
+
+---
+
+## 14. Sistema Bilingüe (ES / EN) — i18n
+
+El sistema soporta español e inglés mediante `react-i18next` + `i18next`.
+
+### Archivos clave
+
+| Archivo | Propósito |
+|---------|-----------|
+| `src/i18n/index.js` | Configuración de i18next con detector de idioma y persistencia en `localStorage` |
+| `src/locales/es.json` | Traducciones en español |
+| `src/locales/en.json` | Traducciones en inglés |
+| `src/components/common/LanguageSelector.jsx` | Toggle ES ↔ EN presente en header cliente y sidebar admin |
+
+### Clave de localStorage
+
+El idioma seleccionado se persiste bajo la clave `techstore-lang`.
+
+### Reglas para agentes
+
+1. **Todo texto visible en la UI debe usar `t('...')`** — nunca hardcodear strings en español o inglés.
+2. **Agregar ambas traducciones** al agregar un nuevo texto: editar `es.json` **y** `en.json`.
+3. **Locale en fechas y números:** usar siempre el idioma activo:
+   ```js
+   const { t, i18n } = useTranslation();
+   const locale = i18n.language?.startsWith('en') ? 'en-US' : 'es-PE';
+   // Luego: new Date().toLocaleString(locale)
+   ```
+4. **Reportes exportados (PDF, Excel, Word):** también deben usar `t()` y el `locale` dinámico para que los encabezados y fechas respeten el idioma seleccionado.
+5. **No usar `'es-PE'` hardcodeado** en ningún lugar. Siempre derivar de `i18n.language`.
+
+### Cobertura actual
+
+Todos los views y componentes tienen `useTranslation` integrado:
+- Views de cliente: Login, Catálogo, Carrito, Historial, Recomendaciones
+- Views de admin: Dashboard, Productos, Usuarios, Gráficas, Métricas, Reportes, **Pruebas**
+- Componentes: CustomerLayout, AdminLayout, PaymentModal, ThemeToggle, ProductCard, LanguageSelector
+

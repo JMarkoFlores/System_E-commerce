@@ -1,8 +1,10 @@
 import React from 'react';
 import { Sun, Moon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const ThemeToggle = ({ className = '' }) => {
+  const { t } = useTranslation();
   const { theme, toggleTheme, mounted } = useTheme();
 
   if (!mounted) {
@@ -27,8 +29,8 @@ const ThemeToggle = ({ className = '' }) => {
           ? 'bg-gray-800 text-yellow-400 hover:bg-gray-700'
           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
       } ${className}`}
-      aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-      title={isDark ? 'Modo claro' : 'Modo oscuro'}
+      aria-label={isDark ? t('theme.toggleLight') : t('theme.toggleDark')}
+      title={isDark ? t('theme.light') : t('theme.dark')}
     >
       {isDark ? <Sun size={20} /> : <Moon size={20} />}
     </button>

@@ -1,8 +1,10 @@
 import React from 'react';
 import { ShoppingCart, TrendingUp, Calendar } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import ProductImage from '../../components/common/ProductImage';
 
 const Historial = ({ historialCompras }) => {
+  const { t } = useTranslation();
   const totalGastado = historialCompras.reduce((sum, p) => sum + p.precio, 0);
   const categoriasFrecuentes = historialCompras.reduce((acc, producto) => {
     acc[producto.categoria] = (acc[producto.categoria] || 0) + 1;
@@ -25,15 +27,15 @@ const Historial = ({ historialCompras }) => {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-foreground mb-2">📋 Mis Compras</h2>
-        <p className="text-muted">Revisa todas tus compras anteriores</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">📋 {t('history.title')}</h2>
+        <p className="text-muted">{t('history.description')}</p>
       </div>
       
       {historialCompras.length === 0 ? (
         <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 text-center">
           <ShoppingCart size={48} className="mx-auto mb-4 text-gray-400" />
-          <p className="text-muted text-lg font-semibold mb-2">Aún no has realizado compras</p>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">Comienza a explorar nuestro catálogo</p>
+          <p className="text-muted text-lg font-semibold mb-2">{t('history.empty')}</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">{t('history.emptyHint')}</p>
         </div>
       ) : (
         <div>
@@ -43,7 +45,7 @@ const Historial = ({ historialCompras }) => {
               <div className="flex items-center justify-between mb-2">
                 <ShoppingCart size={24} />
                 <div className="text-right">
-                  <p className="text-purple-100 text-xs">Total de compras</p>
+                  <p className="text-purple-100 text-xs">{t('history.totalPurchases')}</p>
                   <p className="text-3xl font-bold">{historialCompras.length}</p>
                 </div>
               </div>
@@ -53,7 +55,7 @@ const Historial = ({ historialCompras }) => {
               <div className="flex items-center justify-between mb-2">
                 <TrendingUp size={24} />
                 <div className="text-right">
-                  <p className="text-green-100 text-xs">Total gastado</p>
+                  <p className="text-green-100 text-xs">{t('history.totalSpent')}</p>
                   <p className="text-3xl font-bold">${totalGastado}</p>
                 </div>
               </div>
@@ -63,7 +65,7 @@ const Historial = ({ historialCompras }) => {
               <div className="flex items-center justify-between mb-2">
                 <Calendar size={24} />
                 <div className="text-right">
-                  <p className="text-blue-100 text-xs">Promedio por compra</p>
+                  <p className="text-blue-100 text-xs">{t('history.averagePurchase')}</p>
                   <p className="text-3xl font-bold">${promedioCompra}</p>
                 </div>
               </div>
@@ -72,7 +74,7 @@ const Historial = ({ historialCompras }) => {
 
           {/* Lista de compras */}
           <div className="bg-surface rounded-lg shadow-md p-4 mb-4 border border-border">
-            <h3 className="text-lg font-bold text-foreground mb-4">Todas tus compras ({historialCompras.length})</h3>
+            <h3 className="text-lg font-bold text-foreground mb-4">{t('history.allPurchases', { count: historialCompras.length })}</h3>
             <div className="space-y-3">
               {historialCompras.map((producto, index) => (
                 <div 
@@ -88,10 +90,10 @@ const Historial = ({ historialCompras }) => {
                       <h3 className="font-bold text-foreground">{producto.nombre}</h3>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-full font-semibold">
-                          {producto.categoria}
+                          {t(`categories.${producto.categoria}`, { defaultValue: producto.categoria })}
                         </span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">
-                          Compra #{historialCompras.length - index}
+                          {t('history.purchaseNumber', { number: historialCompras.length - index })}
                         </span>
                       </div>
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
@@ -108,7 +110,7 @@ const Historial = ({ historialCompras }) => {
                   </div>
                   <div className="text-right">
                     <span className="text-2xl font-bold text-green-600 dark:text-green-400">${producto.precio}</span>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Pago exitoso</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('history.paymentSuccess')}</p>
                   </div>
                 </div>
               ))}

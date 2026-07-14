@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Plus, Pencil, Trash2, Search, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { productosApi } from '../../services/api';
 import ProductImage from '../../components/common/ProductImage';
 
 const AdminProductos = ({ productos, setProductos }) => {
+  const { t } = useTranslation();
   const [busqueda, setBusqueda] = useState('');
   const [mostrarModal, setMostrarModal] = useState(false);
   const [productoEditando, setProductoEditando] = useState(null);
@@ -66,19 +68,19 @@ const AdminProductos = ({ productos, setProductos }) => {
       }
       cerrarModal();
     } catch (err) {
-      alert('Error guardando producto: ' + (err.response?.data?.detail || err.message));
+      alert(t('products.saveError') + ': ' + (err.response?.data?.detail || err.message));
     } finally {
       setCargando(false);
     }
   };
 
   const handleEliminar = async (id) => {
-    if (!confirm('¿Estás seguro de eliminar este producto?')) return;
+    if (!confirm(t('products.deleteConfirm'))) return;
     try {
       await productosApi.delete(id);
       setProductos(productos.filter(p => p.id !== id));
     } catch (err) {
-      alert('Error eliminando producto: ' + (err.response?.data?.detail || err.message));
+      alert(t('products.deleteError') + ': ' + (err.response?.data?.detail || err.message));
     }
   };
 
@@ -86,15 +88,15 @@ const AdminProductos = ({ productos, setProductos }) => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-foreground">Gestión de Productos</h2>
-          <p className="text-muted mt-1">Administra el catálogo de productos</p>
+          <h2 className="text-3xl font-bold text-foreground">{t('products.title')}</h2>
+          <p className="text-muted mt-1">{t('products.subtitle')}</p>
         </div>
         <button
           onClick={() => abrirModal()}
           className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
         >
           <Plus size={20} />
-          <span>Agregar Producto</span>
+          <span>{t('products.addProduct')}</span>
         </button>
       </div>
 
@@ -103,7 +105,7 @@ const AdminProductos = ({ productos, setProductos }) => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           <input
             type="text"
-            placeholder="Buscar productos..."
+            placeholder={t('products.searchPlaceholder')}
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-input-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-input-bg text-foreground placeholder-gray-400"
@@ -114,13 +116,13 @@ const AdminProductos = ({ productos, setProductos }) => {
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Imagen</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Nombre</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Categoría</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Precio</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Stock</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Tags</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Acciones</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">{t('products.image')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">{t('common.name')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">{t('common.category')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">{t('common.price')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">{t('common.stock')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">{t('common.tags')}</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -133,7 +135,7 @@ const AdminProductos = ({ productos, setProductos }) => {
                     />
                   </td>
                   <td className="px-4 py-3 font-medium text-foreground">{producto.nombre}</td>
-                  <td className="px-4 py-3 text-muted">{producto.categoria}</td>
+                  <td className="px-4 py-3 text-muted">{t(`categories.${producto.categoria}`, { defaultValue: producto.categoria })}</td>
                   <td className="px-4 py-3 font-semibold text-purple-600 dark:text-purple-400">${producto.precio}</td>
                   <td className="px-4 py-3 text-muted">{producto.stock}</td>
                   <td className="px-4 py-3">
@@ -172,7 +174,7 @@ const AdminProductos = ({ productos, setProductos }) => {
           <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-border">
             <div className="flex items-center justify-between p-6 border-b border-border">
               <h3 className="text-xl font-bold text-foreground">
-                {productoEditando ? 'Editar Producto' : 'Nuevo Producto'}
+                {productoEditando ? t('products.editProduct') : t('products.newProduct')}
               </h3>
               <button onClick={cerrarModal} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-foreground">
                 <X size={20} />
@@ -180,7 +182,7 @@ const AdminProductos = ({ productos, setProductos }) => {
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.name')}</label>
                 <input
                   type="text"
                   required
@@ -191,7 +193,7 @@ const AdminProductos = ({ productos, setProductos }) => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoría</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.category')}</label>
                   <select
                     value={form.categoria}
                     onChange={(e) => setForm({ ...form, categoria: e.target.value })}
@@ -209,7 +211,7 @@ const AdminProductos = ({ productos, setProductos }) => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Precio</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.price')}</label>
                   <input
                     type="number"
                     required
@@ -223,7 +225,7 @@ const AdminProductos = ({ productos, setProductos }) => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Stock</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.stock')}</label>
                   <input
                     type="number"
                     required
@@ -234,23 +236,23 @@ const AdminProductos = ({ productos, setProductos }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags (separados por coma)</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('products.tagsHint')}</label>
                   <input
                     type="text"
                     value={form.tags}
                     onChange={(e) => setForm({ ...form, tags: e.target.value })}
-                    placeholder="gaming,laptop"
+                    placeholder={t('products.tagsPlaceholder')}
                     className="w-full px-4 py-2 border border-input-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-input-bg text-foreground placeholder-gray-400"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL de imagen</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('products.imageURL')}</label>
                 <input
                   type="text"
                   value={form.imagen}
                   onChange={(e) => setForm({ ...form, imagen: e.target.value })}
-                  placeholder="https://..."
+                  placeholder={t('products.imageURLPlaceholder')}
                   className="w-full px-4 py-2 border border-input-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-input-bg text-foreground placeholder-gray-400"
                 />
               </div>
@@ -260,14 +262,14 @@ const AdminProductos = ({ productos, setProductos }) => {
                   onClick={cerrarModal}
                   className="flex-1 px-4 py-2 border border-input-border text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                 >
-                  Cancelar
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={cargando}
                   className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition disabled:opacity-70"
                 >
-                  {cargando ? 'Guardando...' : 'Guardar'}
+                  {cargando ? t('common.processing') : t('common.save')}
                 </button>
               </div>
             </form>

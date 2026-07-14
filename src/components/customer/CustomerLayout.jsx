@@ -1,10 +1,13 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, LogOut } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import ThemeToggle from '../../components/common/ThemeToggle';
+import LanguageSelector from '../../components/common/LanguageSelector';
 
 const CustomerLayout = ({ carritoCount = 0 }) => {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -14,10 +17,10 @@ const CustomerLayout = ({ carritoCount = 0 }) => {
   };
 
   const navItems = [
-    { to: '/catalogo', label: 'Catálogo' },
-    { to: '/recomendaciones', label: 'Recomendaciones IA' },
-    { to: '/historial', label: 'Mis Compras' },
-    { to: '/carrito', label: 'Carrito' }
+    { to: '/catalogo', label: t('nav.catalog') },
+    { to: '/recomendaciones', label: t('nav.recommendations') },
+    { to: '/historial', label: t('nav.purchases') },
+    { to: '/carrito', label: t('nav.cart') }
   ];
 
   return (
@@ -31,6 +34,7 @@ const CustomerLayout = ({ carritoCount = 0 }) => {
           </div>
 
           <div className="flex items-center space-x-4">
+            <LanguageSelector />
             <ThemeToggle />
 
             <div className="flex items-center space-x-2 bg-purple-100 dark:bg-purple-900/30 px-4 py-2 rounded-lg">
@@ -55,7 +59,7 @@ const CustomerLayout = ({ carritoCount = 0 }) => {
               className="flex items-center space-x-2 px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition"
             >
               <LogOut size={20} />
-              <span>Salir</span>
+              <span>{t('common.logout')}</span>
             </button>
           </div>
         </div>

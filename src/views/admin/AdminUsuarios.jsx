@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Search, X, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { usuariosApi } from '../../services/api';
 
 const AdminUsuarios = () => {
+  const { t } = useTranslation();
   const [usuarios, setUsuarios] = useState([]);
   const [busqueda, setBusqueda] = useState('');
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -20,7 +22,7 @@ const AdminUsuarios = () => {
       const res = await usuariosApi.getAll();
       setUsuarios(res.data);
     } catch (err) {
-      alert('Error cargando usuarios: ' + (err.response?.data?.detail || err.message));
+      alert(t('users.loadError') + ': ' + (err.response?.data?.detail || err.message));
     } finally {
       setCargandoLista(false);
     }
@@ -62,19 +64,19 @@ const AdminUsuarios = () => {
       await cargarUsuarios();
       cerrarModal();
     } catch (err) {
-      alert('Error guardando usuario: ' + (err.response?.data?.detail || err.message));
+      alert(t('users.saveError') + ': ' + (err.response?.data?.detail || err.message));
     } finally {
       setCargando(false);
     }
   };
 
   const handleEliminar = async (id) => {
-    if (!confirm('¿Estás seguro de eliminar este usuario?')) return;
+    if (!confirm(t('users.deleteConfirm'))) return;
     try {
       await usuariosApi.delete(id);
       await cargarUsuarios();
     } catch (err) {
-      alert('Error eliminando usuario: ' + (err.response?.data?.detail || err.message));
+      alert(t('users.deleteError') + ': ' + (err.response?.data?.detail || err.message));
     }
   };
 
@@ -98,16 +100,16 @@ const AdminUsuarios = () => {
         <div>
           <h2 className="text-3xl font-bold text-foreground flex items-center">
             <Users className="mr-3 text-purple-600" size={32} />
-            Gestión de Usuarios
+            {t('users.title')}
           </h2>
-          <p className="text-muted mt-1">Administra clientes y administradores</p>
+          <p className="text-muted mt-1">{t('users.subtitle')}</p>
         </div>
         <button
           onClick={() => abrirModal()}
           className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
         >
           <Plus size={20} />
-          <span>Nuevo Usuario</span>
+          <span>{t('users.newUser')}</span>
         </button>
       </div>
 
@@ -116,7 +118,7 @@ const AdminUsuarios = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           <input
             type="text"
-            placeholder="Buscar usuarios..."
+            placeholder={t('users.searchPlaceholder')}
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-input-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-input-bg text-foreground placeholder-gray-400"
@@ -127,11 +129,11 @@ const AdminUsuarios = () => {
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">ID</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Rol</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Registrado</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Acciones</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">{t('users.id')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">{t('common.email')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">{t('common.role')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">{t('common.registered')}</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -145,7 +147,7 @@ const AdminUsuarios = () => {
                         ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
                         : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                     }`}>
-                      {usuario.role === 'admin' ? 'Administrador' : 'Cliente'}
+                      {t(`roles.${usuario.role}`)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-muted">{formatearFecha(usuario.created_at)}</td>
@@ -178,7 +180,7 @@ const AdminUsuarios = () => {
           <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-md border border-border">
             <div className="flex items-center justify-between p-6 border-b border-border">
               <h3 className="text-xl font-bold text-foreground">
-                {usuarioEditando ? 'Editar Usuario' : 'Nuevo Usuario'}
+                {usuarioEditando ? t('users.editUser') : t('users.newUser')}
               </h3>
               <button onClick={cerrarModal} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-foreground">
                 <X size={20} />
@@ -186,7 +188,7 @@ const AdminUsuarios = () => {
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Correo electrónico</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.email')}</label>
                 <input
                   type="email"
                   required
@@ -197,7 +199,7 @@ const AdminUsuarios = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Contraseña {usuarioEditando && '(dejar en blanco para mantener)'}
+                  {usuarioEditando ? t('users.passwordHint') : t('common.password')}
                 </label>
                 <input
                   type="password"
@@ -209,14 +211,14 @@ const AdminUsuarios = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rol</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.role')}</label>
                 <select
                   value={form.role}
                   onChange={(e) => setForm({ ...form, role: e.target.value })}
                   className="w-full px-4 py-2 border border-input-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-input-bg text-foreground"
                 >
-                  <option value="cliente">Cliente</option>
-                  <option value="admin">Administrador</option>
+                  <option value="cliente">{t('roles.cliente')}</option>
+                  <option value="admin">{t('roles.admin')}</option>
                 </select>
               </div>
               <div className="flex space-x-3 pt-4">
@@ -225,14 +227,14 @@ const AdminUsuarios = () => {
                   onClick={cerrarModal}
                   className="flex-1 px-4 py-2 border border-input-border text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                 >
-                  Cancelar
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={cargando}
                   className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition disabled:opacity-70"
                 >
-                  {cargando ? 'Guardando...' : 'Guardar'}
+                  {cargando ? t('common.processing') : t('common.save')}
                 </button>
               </div>
             </form>
