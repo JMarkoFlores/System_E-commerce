@@ -4,8 +4,11 @@ import {
   ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
 } from "recharts";
 import { Target, TrendingUp, Award, Brain, CheckCircle, AlertCircle, Activity, Zap } from "lucide-react";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const AdminMetricas = ({ historialCompras, recomendaciones, estadisticasIA }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const metricas = useMemo(() => {
     if (historialCompras.length < 2) return null;
 
@@ -82,16 +85,19 @@ const AdminMetricas = ({ historialCompras, recomendaciones, estadisticasIA }) =>
     const isGood = porcentaje >= 70;
     const isMedium = porcentaje >= 40 && porcentaje < 70;
 
+    const bgIcon = color.replace("border-", isDark ? "bg-" : "bg-").replace("600", isDark ? "900/30" : "100");
+    const textIcon = color.replace("border-", "text-").replace("600", isDark ? "400" : "600");
+
     return (
-      <div className={`bg-white rounded-lg shadow-lg p-6 border-l-4 ${color}`}>
+      <div className={`bg-surface rounded-lg shadow-lg p-6 border-l-4 ${color} border border-border`}>
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center space-x-3">
-            <div className={`p-3 rounded-full ${color.replace("border-", "bg-").replace("600", "100")}`}>
-              <Icono className={color.replace("border-", "text-")} size={24} />
+            <div className={`p-3 rounded-full ${bgIcon}`}>
+              <Icono className={textIcon} size={24} />
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-600">{titulo}</h3>
-              <p className="text-3xl font-bold text-gray-800 mt-1">{valor}{sufijo}</p>
+              <h3 className="text-sm font-medium text-muted">{titulo}</h3>
+              <p className="text-3xl font-bold text-foreground mt-1">{valor}{sufijo}</p>
             </div>
           </div>
           <div>
@@ -100,20 +106,40 @@ const AdminMetricas = ({ historialCompras, recomendaciones, estadisticasIA }) =>
             {!isGood && !isMedium && <AlertCircle className="text-red-500" size={24} />}
           </div>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
           <div className={`h-2 rounded-full ${isGood ? "bg-green-500" : isMedium ? "bg-yellow-500" : "bg-red-500"}`} style={{ width: `${Math.min(porcentaje, 100)}%` }}></div>
         </div>
-        <p className="text-xs text-gray-500">{descripcion}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{descripcion}</p>
       </div>
     );
   };
 
+  const ejeColor = isDark ? '#9ca3af' : '#6b7280';
+  const gridColor = isDark ? '#374151' : '#e5e7eb';
+  const tooltipBg = isDark ? '#1f2937' : '#ffffff';
+  const tooltipBorder = isDark ? '#374151' : '#e5e7eb';
+  const tooltipText = isDark ? '#f9fafb' : '#111827';
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="p-3 rounded-lg shadow-lg border" style={{ backgroundColor: tooltipBg, borderColor: tooltipBorder }}>
+          <p className="font-semibold text-sm" style={{ color: tooltipText }}>{label}</p>
+          {payload.map((entry, index) => (
+            <p key={index} style={{ color: entry.color }} className="text-sm">{entry.name}: {entry.value}</p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
   if (!metricas) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 text-center">
+      <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-8 text-center">
         <Activity size={64} className="mx-auto mb-4 text-yellow-500" />
-        <h3 className="text-2xl font-bold text-gray-800 mb-2">Datos Insuficientes</h3>
-        <p className="text-gray-600">Necesitas al menos 2 compras para evaluar las métricas del modelo de IA.</p>
+        <h3 className="text-2xl font-bold text-foreground mb-2">Datos Insuficientes</h3>
+        <p className="text-muted">Necesitas al menos 2 compras para evaluar las métricas del modelo de IA.</p>
       </div>
     );
   }
@@ -156,63 +182,63 @@ const AdminMetricas = ({ historialCompras, recomendaciones, estadisticasIA }) =>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center"><Target className="mr-2 text-purple-600" size={24} /> Análisis Multidimensional</h3>
+        <div className="bg-surface rounded-lg shadow-lg p-6 border border-border">
+          <h3 className="text-xl font-bold text-foreground mb-4 flex items-center"><Target className="mr-2 text-purple-600" size={24} /> Análisis Multidimensional</h3>
           <ResponsiveContainer width="100%" height={350}>
             <RadarChart data={datosRadar}>
-              <PolarGrid />
-              <PolarAngleAxis dataKey="metrica" style={{ fontSize: "12px" }} />
-              <PolarRadiusAxis angle={90} domain={[0, 100]} />
+              <PolarGrid stroke={gridColor} />
+              <PolarAngleAxis dataKey="metrica" tick={{ fill: ejeColor, fontSize: 12 }} />
+              <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: ejeColor, fontSize: 10 }} />
               <Radar name="Rendimiento" dataKey="valor" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.6} />
-              <Tooltip />
+              <Tooltip content={<CustomTooltip />} />
             </RadarChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center"><TrendingUp className="mr-2 text-blue-600" size={24} /> Evolución del Loss</h3>
+        <div className="bg-surface rounded-lg shadow-lg p-6 border border-border">
+          <h3 className="text-xl font-bold text-foreground mb-4 flex items-center"><TrendingUp className="mr-2 text-blue-600" size={24} /> Evolución del Loss</h3>
           {metricas.evolucionLoss.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={metricas.evolucionLoss}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="generacion" style={{ fontSize: "12px" }} />
-                <YAxis />
-                <Tooltip />
-                <Legend />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                <XAxis dataKey="generacion" tick={{ fill: ejeColor, fontSize: 12 }} axisLine={{ stroke: gridColor }} tickLine={{ stroke: gridColor }} />
+                <YAxis tick={{ fill: ejeColor, fontSize: 12 }} axisLine={{ stroke: gridColor }} tickLine={{ stroke: gridColor }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend wrapperStyle={{ color: ejeColor }} />
                 <Line type="monotone" dataKey="loss" stroke="#3B82F6" strokeWidth={3} name="Loss (%)" dot={{ r: 5 }} />
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="text-center text-gray-500 py-8">No hay suficientes generaciones para mostrar la evolución</div>
+            <div className="text-center text-muted py-8">No hay suficientes generaciones para mostrar la evolución</div>
           )}
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center"><Award className="mr-2 text-green-600" size={24} /> Comparación de Métricas Clave</h3>
+        <div className="bg-surface rounded-lg shadow-lg p-6 border border-border">
+          <h3 className="text-xl font-bold text-foreground mb-4 flex items-center"><Award className="mr-2 text-green-600" size={24} /> Comparación de Métricas Clave</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={[{ nombre: "Precisión", valor: parseFloat(metricas.precisionAtK) }, { nombre: "Relevancia", valor: parseFloat(metricas.relevancia) }, { nombre: "Accuracy", valor: parseFloat(metricas.accuracy) }, { nombre: "Hit Rate", valor: parseFloat(metricas.hitRate) }]}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="nombre" style={{ fontSize: "12px" }} />
-              <YAxis domain={[0, 100]} />
-              <Tooltip formatter={(value) => `${value.toFixed(1)}%`} />
+              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+              <XAxis dataKey="nombre" tick={{ fill: ejeColor, fontSize: 12 }} axisLine={{ stroke: gridColor }} tickLine={{ stroke: gridColor }} />
+              <YAxis domain={[0, 100]} tick={{ fill: ejeColor, fontSize: 12 }} axisLine={{ stroke: gridColor }} tickLine={{ stroke: gridColor }} />
+              <Tooltip formatter={(value) => `${value.toFixed(1)}%`} content={<CustomTooltip />} />
               <Bar dataKey="valor" fill="#10B981" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center"><Brain className="mr-2 text-indigo-600" size={24} /> Recomendaciones de Mejora</h3>
+        <div className="bg-surface rounded-lg shadow-lg p-6 border border-border">
+          <h3 className="text-xl font-bold text-foreground mb-4 flex items-center"><Brain className="mr-2 text-indigo-600" size={24} /> Recomendaciones de Mejora</h3>
           <div className="space-y-3">
             {parseFloat(metricas.accuracy) < 70 && (
-              <div className="p-3 bg-yellow-50 border-l-4 border-yellow-500 rounded"><p className="text-sm text-gray-700"><strong>⚠️ Accuracy Bajo:</strong> El modelo necesita más datos de entrenamiento.</p></div>
+              <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 rounded"><p className="text-sm text-gray-700 dark:text-gray-200"><strong>⚠️ Accuracy Bajo:</strong> El modelo necesita más datos de entrenamiento.</p></div>
             )}
             {parseFloat(metricas.diversidad) < 50 && (
-              <div className="p-3 bg-blue-50 border-l-4 border-blue-500 rounded"><p className="text-sm text-gray-700"><strong>💡 Poca Diversidad:</strong> Las recomendaciones se concentran en pocas categorías.</p></div>
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded"><p className="text-sm text-gray-700 dark:text-gray-200"><strong>💡 Poca Diversidad:</strong> Las recomendaciones se concentran en pocas categorías.</p></div>
             )}
             {parseFloat(metricas.accuracy) >= 70 && parseFloat(metricas.diversidad) >= 50 && (
-              <div className="p-3 bg-green-50 border-l-4 border-green-500 rounded"><p className="text-sm text-gray-700"><strong>✅ Excelente Rendimiento:</strong> El modelo está funcionando muy bien.</p></div>
+              <div className="p-3 bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 rounded"><p className="text-sm text-gray-700 dark:text-gray-200"><strong>✅ Excelente Rendimiento:</strong> El modelo está funcionando muy bien.</p></div>
             )}
-            <div className="p-3 bg-purple-50 border-l-4 border-purple-500 rounded"><p className="text-sm text-gray-700"><strong>🧠 Info:</strong> La red neuronal ha completado {estadisticasIA?.generacion || 0} generaciones de entrenamiento.</p></div>
+            <div className="p-3 bg-purple-50 dark:bg-purple-900/20 border-l-4 border-purple-500 rounded"><p className="text-sm text-gray-700 dark:text-gray-200"><strong>🧠 Info:</strong> La red neuronal ha completado {estadisticasIA?.generacion || 0} generaciones de entrenamiento.</p></div>
           </div>
         </div>
       </div>

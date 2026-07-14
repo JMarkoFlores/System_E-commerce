@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --background: #f9fafb;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --foreground: #111827;
+  --muted: #4b5563;
+  --subtle: #6b7280;
+  --border: #e5e7eb;
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+}
+
+.dark {
+  --background: #111827;
+  --surface: #1f2937;
+  --surface-elevated: #273142;
+  --foreground: #f9fafb;
+  --muted: #9ca3af;
+  --subtle: #9ca3af;
+  --border: #374151;
+  --input-bg: #1f2937;
+  --input-border: #4b5563;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -14,40 +38,6 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-.welcome {
-    text-align: center;
-    margin: 20px;
-    font-size: 1.5em;
-    color: #333;
-}
-
-.categories {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    margin: 20px;
-}
-
-.category {
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 10px;
-    margin: 10px;
-    width: 30%;
-}
-
-.category h2 {
-    text-align: center;
-}
-
-.category ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-.category li {
-    padding: 5px;
-    text-align: center;
+  background-color: var(--background);
+  color: var(--foreground);
 }

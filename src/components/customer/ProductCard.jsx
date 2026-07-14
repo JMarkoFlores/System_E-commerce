@@ -22,9 +22,9 @@ const ProductCard = ({ producto, onAddToCart, onBuyNow }) => {
   );
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+    <div className="bg-surface rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-border">
       {/* Imagen del producto */}
-      <div className="relative h-48 bg-gradient-to-br from-purple-50 to-blue-50 overflow-hidden group flex items-center justify-center">
+      <div className="relative h-48 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 overflow-hidden group flex items-center justify-center">
         {isValidImage && !imagenError ? (
           <>
             <img
@@ -50,7 +50,7 @@ const ProductCard = ({ producto, onAddToCart, onBuyNow }) => {
         )}
         
         {/* Badge de categoría */}
-        <span className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-purple-800 text-xs font-bold px-3 py-1 rounded-full shadow-lg z-20">
+        <span className="absolute top-3 right-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-purple-800 dark:text-purple-200 text-xs font-bold px-3 py-1 rounded-full shadow-lg z-20">
           {producto.categoria}
         </span>
       </div>
@@ -58,14 +58,14 @@ const ProductCard = ({ producto, onAddToCart, onBuyNow }) => {
       {/* Contenido */}
       <div className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h3 className="text-lg font-bold text-gray-800 line-clamp-2 flex-1">
+          <h3 className="text-lg font-bold text-foreground line-clamp-2 flex-1">
             {producto.nombre}
           </h3>
         </div>
         
         <div className="flex flex-wrap gap-1 mb-4">
           {producto.tags.slice(0, 3).map(tag => (
-            <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+            <span key={tag} className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-1 rounded-full">
               #{tag}
             </span>
           ))}
@@ -73,7 +73,7 @@ const ProductCard = ({ producto, onAddToCart, onBuyNow }) => {
         
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-baseline">
-            <span className="text-3xl font-bold text-purple-600">${producto.precio}</span>
+            <span className="text-3xl font-bold text-purple-600 dark:text-purple-400">${producto.precio}</span>
           </div>
           <div className="flex items-center text-yellow-500">
             <Star size={16} fill="currentColor" />

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Store, Shield } from 'lucide-react';
+import { ShoppingCart, Shield } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import ThemeToggle from '../../components/common/ThemeToggle';
 
 const Login = () => {
   const { login, register } = useAuth();
@@ -38,22 +39,25 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      <div className="bg-surface rounded-2xl shadow-2xl p-8 w-full max-w-md border border-border">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="bg-purple-100 p-4 rounded-full">
-              <ShoppingCart className="text-purple-600" size={40} />
+            <div className="bg-purple-100 dark:bg-purple-900/30 p-4 rounded-full">
+              <ShoppingCart className="text-purple-600 dark:text-purple-300" size={40} />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-3xl font-bold text-foreground">
             {modoRegistro ? 'Crear Cuenta' : 'Iniciar Sesión'}
           </h1>
-          <p className="text-gray-600 mt-2">TechStore AI - Sistema de Recomendación Inteligente</p>
+          <p className="text-muted mt-2">TechStore AI - Sistema de Recomendación Inteligente</p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+          <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">
             {error}
           </div>
         )}
@@ -63,7 +67,7 @@ const Login = () => {
             type="email"
             placeholder="Correo electrónico"
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full px-4 py-3 border border-input-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-input-bg text-foreground placeholder-gray-400"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
@@ -72,7 +76,7 @@ const Login = () => {
             placeholder="Contraseña"
             required
             minLength={4}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full px-4 py-3 border border-input-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-input-bg text-foreground placeholder-gray-400"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
@@ -88,18 +92,18 @@ const Login = () => {
 
         <button
           onClick={() => setModoRegistro(!modoRegistro)}
-          className="w-full mt-4 text-purple-600 hover:text-purple-700 transition text-sm"
+          className="w-full mt-4 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition text-sm"
         >
           {modoRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate'}
         </button>
 
         {/* Admin hint */}
-        <div className="mt-6 p-3 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="flex items-center text-xs text-gray-600 mb-1">
-            <Shield size={14} className="mr-1 text-purple-600" />
+        <div className="mt-6 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-border">
+          <div className="flex items-center text-xs text-muted mb-1">
+            <Shield size={14} className="mr-1 text-purple-600 dark:text-purple-400" />
             <span className="font-semibold">Acceso administrador:</span>
           </div>
-          <p className="text-xs text-gray-500">admin@losportales.com.pe / admin123</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">admin@losportales.com.pe / admin123</p>
         </div>
       </div>
     </div>

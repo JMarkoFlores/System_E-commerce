@@ -7,9 +7,12 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { reportesApi, pedidosApi } from '../../services/api';
+import { useTheme } from '../../contexts/ThemeContext';
 import ProductImage from '../../components/common/ProductImage';
 
 const AdminDashboard = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [reporte, setReporte] = useState(null);
   const [pedidos, setPedidos] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -72,15 +75,18 @@ const AdminDashboard = () => {
         { fecha: 'Dom', total: 7000 },
       ];
 
+  const ejeColor = isDark ? '#9ca3af' : '#6b7280';
+  const gridColor = isDark ? '#374151' : '#e5e7eb';
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-gray-800 flex items-center">
+          <h2 className="text-3xl font-bold text-foreground flex items-center">
             <LayoutDashboard className="mr-3 text-purple-600" size={32} />
             Panel Principal
           </h2>
-          <p className="text-gray-600 mt-1">Resumen general del negocio</p>
+          <p className="text-muted mt-1">Resumen general del negocio</p>
         </div>
       </div>
 
@@ -111,41 +117,44 @@ const AdminDashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Gráfica de ventas */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-lg p-6">
+        <div className="lg:col-span-2 bg-surface rounded-xl shadow-lg p-6 border border-border">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-gray-800">Ventas de la Semana</h3>
-            <button className="p-2 hover:bg-gray-100 rounded-lg">
+            <h3 className="text-xl font-bold text-foreground">Ventas de la Semana</h3>
+            <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
               <MoreHorizontal size={20} className="text-gray-400" />
             </button>
           </div>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={ventasSemana}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="fecha" style={{ fontSize: '12px' }} />
-              <YAxis style={{ fontSize: '12px' }} />
-              <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
+              <XAxis dataKey="fecha" tick={{ fill: ejeColor, fontSize: 12 }} axisLine={{ stroke: gridColor }} tickLine={{ stroke: gridColor }} />
+              <YAxis tick={{ fill: ejeColor, fontSize: 12 }} axisLine={{ stroke: gridColor }} tickLine={{ stroke: gridColor }} />
+              <Tooltip
+                formatter={(value) => `$${value.toLocaleString()}`}
+                contentStyle={{ backgroundColor: isDark ? '#1f2937' : '#ffffff', borderColor: isDark ? '#374151' : '#e5e7eb', color: isDark ? '#f9fafb' : '#111827' }}
+              />
               <Bar dataKey="total" fill="#8B5CF6" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         {/* Pedidos recientes */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Pedidos Recientes</h3>
+        <div className="bg-surface rounded-xl shadow-lg p-6 border border-border">
+          <h3 className="text-xl font-bold text-foreground mb-4">Pedidos Recientes</h3>
           {pedidos.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No hay pedidos registrados</p>
+            <p className="text-muted text-center py-8">No hay pedidos registrados</p>
           ) : (
             <div className="space-y-4 max-h-80 overflow-y-auto">
               {pedidos.map((pedido) => (
-                <div key={pedido.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={pedido.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <div>
-                    <p className="font-semibold text-gray-800">Pedido #{pedido.id}</p>
-                    <p className="text-xs text-gray-500">{pedido.usuario?.email}</p>
-                    <p className="text-xs text-gray-400">{formatearFecha(pedido.fecha)} {formatearHora(pedido.fecha)}</p>
+                    <p className="font-semibold text-foreground">Pedido #{pedido.id}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{pedido.usuario?.email}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">{formatearFecha(pedido.fecha)} {formatearHora(pedido.fecha)}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-gray-800">${pedido.total}</p>
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                    <p className="font-bold text-foreground">${pedido.total}</p>
+                    <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-1 rounded-full">
                       {pedido.estado}
                     </span>
                   </div>
@@ -157,17 +166,17 @@ const AdminDashboard = () => {
       </div>
 
       {/* Productos populares */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">Productos Populares</h3>
+      <div className="bg-surface rounded-xl shadow-lg p-6 border border-border">
+        <h3 className="text-xl font-bold text-foreground mb-4">Productos Populares</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {reporte?.categorias_top?.slice(0, 4).map((cat, index) => (
-            <div key={index} className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-4 border border-purple-100">
-              <p className="text-sm text-gray-600">{cat.categoria}</p>
-              <p className="text-2xl font-bold text-purple-600 mt-1">{cat.cantidad}</p>
-              <p className="text-xs text-gray-500">ventas • ${cat.total.toLocaleString()}</p>
+            <div key={index} className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg p-4 border border-purple-100 dark:border-purple-900/30">
+              <p className="text-sm text-muted">{cat.categoria}</p>
+              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{cat.cantidad}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">ventas • ${cat.total.toLocaleString()}</p>
             </div>
           )) || (
-            <p className="text-gray-500 col-span-4 text-center py-4">Aún no hay datos de ventas por categoría</p>
+            <p className="text-muted col-span-4 text-center py-4">Aún no hay datos de ventas por categoría</p>
           )}
         </div>
       </div>

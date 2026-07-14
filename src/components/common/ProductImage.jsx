@@ -11,7 +11,7 @@ const ProductImage = ({ producto, className = '', fallbackClassName = '' }) => {
 
   if (!isValidImage || error) {
     return (
-      <div className={`bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center ${fallbackClassName || className}`}>
+      <div className={`bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/20 dark:to-blue-900/20 flex items-center justify-center ${fallbackClassName || className}`}>
         <span className="text-4xl">
           {EMOJI_CATEGORIAS[producto.categoria] || '📦'}
         </span>

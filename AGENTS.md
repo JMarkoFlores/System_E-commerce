@@ -151,11 +151,25 @@ Contraseña: admin123
 ### Persistencia
 
 - **Backend SQLite:** fuente de verdad para usuarios, productos y pedidos.
-- **localStorage:** guarda el JWT y datos básicos del usuario logueado.
+- **localStorage:** guarda el JWT, datos básicos del usuario logueado y la preferencia de tema (`techstore-theme`).
 
 ---
 
-## 6. Recomendaciones con IA
+## 6. Modo claro / oscuro
+
+La aplicación soporta tema claro y oscuro manual mediante un toggle.
+
+- **Configuración:** `darkMode: 'class'` en `tailwind.config.js`.
+- **Tokens semánticos:** definidos como variables CSS en `src/index.css` y expuestos en Tailwind (`background`, `surface`, `foreground`, `muted`, `border`, `input-bg`, `input-border`).
+- **Contexto:** `src/contexts/ThemeContext.jsx` maneja el estado, persiste en `localStorage` y aplica/quita la clase `dark` en `<html>`.
+- **Toggle:** `src/components/common/ThemeToggle.jsx` usa iconos de sol/luna y está presente en el header del cliente, en el sidebar del administrador y en la pantalla de login.
+- **Gráficas:** los componentes con Recharts (`AdminDashboard`, `AdminGraficas`, `AdminMetricas`, `AdminPruebas`) leen el tema desde `useTheme()` y ajustan colores de ejes, grid y tooltips.
+
+Al agregar nuevos componentes o vistas, usar los tokens semánticos y agregar las variantes `dark:` para mantener consistencia en ambos modos.
+
+---
+
+## 7. Recomendaciones con IA
 
 - La red neuronal (`src/utils/RedNeuronal.js`) se entrena en el navegador con TensorFlow.js.
 - Usa el historial de compras del cliente.
@@ -164,7 +178,7 @@ Contraseña: admin123
 
 ---
 
-## 7. Scripts disponibles
+## 8. Scripts disponibles
 
 ### Frontend
 
@@ -190,7 +204,7 @@ cd backend
 
 ---
 
-## 8. Convenciones de código
+## 9. Convenciones de código
 
 - Componentes React en archivos `.jsx` con funciones.
 - Imports relativos.
@@ -199,7 +213,7 @@ cd backend
 
 ---
 
-## 9. Puntos de atención para desarrolladores
+## 10. Puntos de atención para desarrolladores
 
 1. **Backend debe estar corriendo** para que el frontend funcione (login, productos, pedidos, etc.).
 2. **CORS** configurado para `http://localhost:5173`.
@@ -210,7 +224,7 @@ cd backend
 
 ---
 
-## 10. Guía rápida para agentes de IA
+## 11. Guía rápida para agentes de IA
 
 ### Agregar una nueva vista de cliente
 
@@ -242,7 +256,7 @@ cd backend
 
 ---
 
-## 11. Posibles mejoras futuras
+## 12. Posibles mejoras futuras
 
 - Persistir modelo de IA entre sesiones.
 - Conectar pasarela de pago real.
@@ -250,7 +264,7 @@ cd backend
 
 ---
 
-## 12. Módulo de Pruebas del Modelo de IA
+## 13. Módulo de Pruebas del Modelo de IA
 
 El módulo `AdminPruebas` permite evaluar estadísticamente el modelo de recomendación con Red Neuronal de forma offline.
 

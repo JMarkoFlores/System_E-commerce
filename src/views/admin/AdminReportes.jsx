@@ -180,48 +180,48 @@ const AdminReportes = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold text-gray-800 flex items-center">
+        <h2 className="text-3xl font-bold text-foreground flex items-center">
           <FileText className="mr-3 text-purple-600" size={32} />
           Reportes
         </h2>
-        <p className="text-gray-600 mt-1">Genera reportes operacionales y de gestión</p>
+        <p className="text-muted mt-1">Genera reportes operacionales y de gestión</p>
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
+      <div className="bg-surface rounded-xl shadow-lg p-6 border border-border">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de reporte</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo de reporte</label>
             <select
               value={tipoReporte}
               onChange={(e) => { setTipoReporte(e.target.value); setReporte(null); }}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-2 border border-input-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-input-bg text-foreground"
             >
               <option value="operacional">Operacional</option>
               <option value="gestion">Gestión</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha inicio</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha inicio</label>
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
                 type="date"
                 value={fechaInicio}
                 onChange={(e) => setFechaInicio(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full pl-10 pr-4 py-2 border border-input-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-input-bg text-foreground"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha fin</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha fin</label>
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
                 type="date"
                 value={fechaFin}
                 onChange={(e) => setFechaFin(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full pl-10 pr-4 py-2 border border-input-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-input-bg text-foreground"
               />
             </div>
           </div>
@@ -240,9 +240,9 @@ const AdminReportes = () => {
 
       {/* Resultados */}
       {reporte && (
-        <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="bg-surface rounded-xl shadow-lg p-6 border border-border">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            <h3 className="text-xl font-bold text-gray-800 flex items-center">
+            <h3 className="text-xl font-bold text-foreground flex items-center">
               {tipoReporte === 'operacional' ? <BarChart3 className="mr-2 text-purple-600" size={24} /> : <PieChart className="mr-2 text-blue-600" size={24} />}
               Resultados del Reporte
             </h3>
@@ -274,38 +274,38 @@ const AdminReportes = () => {
           {tipoReporte === 'operacional' ? (
             <div className="space-y-6">
               <div>
-                <h4 className="font-semibold text-gray-700 mb-3">Ventas por Día</h4>
+                <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-3">Ventas por Día</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-gray-50 dark:bg-gray-800">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Fecha</th>
-                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Total</th>
-                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Pedidos</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Fecha</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Total</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Pedidos</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200">
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                       {reporte.ventas_por_dia.map((v, i) => (
-                        <tr key={i}><td className="px-4 py-2">{v.fecha}</td><td className="px-4 py-2 font-semibold">${v.total.toLocaleString()}</td><td className="px-4 py-2">{v.pedidos}</td></tr>
+                        <tr key={i}><td className="px-4 py-2 text-foreground">{v.fecha}</td><td className="px-4 py-2 font-semibold text-foreground">${v.total.toLocaleString()}</td><td className="px-4 py-2 text-foreground">{v.pedidos}</td></tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               </div>
               <div>
-                <h4 className="font-semibold text-gray-700 mb-3">Productos Más Vendidos</h4>
+                <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-3">Productos Más Vendidos</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-gray-50 dark:bg-gray-800">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Producto</th>
-                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Cantidad</th>
-                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Total</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Producto</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Cantidad</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Total</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200">
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                       {reporte.productos_top.map((p, i) => (
-                        <tr key={i}><td className="px-4 py-2">{p.nombre}</td><td className="px-4 py-2">{p.cantidad}</td><td className="px-4 py-2 font-semibold">${p.total.toLocaleString()}</td></tr>
+                        <tr key={i}><td className="px-4 py-2 text-foreground">{p.nombre}</td><td className="px-4 py-2 text-foreground">{p.cantidad}</td><td className="px-4 py-2 font-semibold text-foreground">${p.total.toLocaleString()}</td></tr>
                       ))}
                     </tbody>
                   </table>
@@ -329,19 +329,19 @@ const AdminReportes = () => {
                 </div>
               </div>
               <div>
-                <h4 className="font-semibold text-gray-700 mb-3">Categorías Top</h4>
+                <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-3">Categorías Top</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-gray-50 dark:bg-gray-800">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Categoría</th>
-                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Cantidad</th>
-                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Total</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Categoría</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Cantidad</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Total</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200">
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                       {reporte.categorias_top.map((c, i) => (
-                        <tr key={i}><td className="px-4 py-2">{c.categoria}</td><td className="px-4 py-2">{c.cantidad}</td><td className="px-4 py-2 font-semibold">${c.total.toLocaleString()}</td></tr>
+                        <tr key={i}><td className="px-4 py-2 text-foreground">{c.categoria}</td><td className="px-4 py-2 text-foreground">{c.cantidad}</td><td className="px-4 py-2 font-semibold text-foreground">${c.total.toLocaleString()}</td></tr>
                       ))}
                     </tbody>
                   </table>

@@ -30,12 +30,12 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
       </div>
 
       {historialCompras.length === 0 ? (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 text-center">
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-8 text-center">
           <Star size={48} className="mx-auto mb-4 text-yellow-500" />
-          <h3 className="text-xl font-bold text-gray-800 mb-2">
+          <h3 className="text-xl font-bold text-foreground mb-2">
             ¡Comienza a comprar para obtener recomendaciones!
           </h3>
-          <p className="text-gray-600">
+          <p className="text-muted">
             La IA aprenderá de tus preferencias y te sugerirá productos personalizados
           </p>
         </div>
@@ -43,21 +43,21 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
         <>
           {/* Estadísticas de aprendizaje */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
+            <div className="bg-surface rounded-lg shadow p-4 border-l-4 border-purple-500">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-gray-600">Compras analizadas</p>
-                  <p className="text-2xl font-bold text-gray-800">{historialCompras.length}</p>
+                  <p className="text-xs text-muted">Compras analizadas</p>
+                  <p className="text-2xl font-bold text-foreground">{historialCompras.length}</p>
                 </div>
                 <TrendingUp className="text-purple-500" size={24} />
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+            <div className="bg-surface rounded-lg shadow p-4 border-l-4 border-blue-500">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-gray-600">Categorías exploradas</p>
-                  <p className="text-2xl font-bold text-gray-800">
+                  <p className="text-xs text-muted">Categorías exploradas</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {new Set(historialCompras.map(h => h.categoria)).size}
                   </p>
                 </div>
@@ -65,21 +65,21 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+            <div className="bg-surface rounded-lg shadow p-4 border-l-4 border-green-500">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-gray-600">Recomendaciones activas</p>
-                  <p className="text-2xl font-bold text-gray-800">{recomendaciones.length}</p>
+                  <p className="text-xs text-muted">Recomendaciones activas</p>
+                  <p className="text-2xl font-bold text-foreground">{recomendaciones.length}</p>
                 </div>
                 <Zap className="text-green-500" size={24} />
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-4 border-l-4 border-orange-500">
+            <div className="bg-surface rounded-lg shadow p-4 border-l-4 border-orange-500">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-gray-600">Generación IA</p>
-                  <p className="text-2xl font-bold text-gray-800">#{estadisticasIA?.generacion || 0}</p>
+                  <p className="text-xs text-muted">Generación IA</p>
+                  <p className="text-2xl font-bold text-foreground">#{estadisticasIA?.generacion || 0}</p>
                 </div>
                 <Brain className="text-orange-500" size={24} />
               </div>
@@ -88,17 +88,17 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
 
           {/* Productos recomendados */}
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-800">
+            <h3 className="text-lg font-semibold text-foreground">
               🎯 Productos seleccionados especialmente para ti
             </h3>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-muted">
               Actualizadas en tiempo real
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {recomendaciones.map((producto, index) => (
-              <div key={producto.id} className="bg-white rounded-lg shadow-md border-2 border-purple-200 hover:shadow-xl hover:border-purple-400 transition-all relative overflow-hidden">
+              <div key={producto.id} className="bg-surface rounded-lg shadow-md border-2 border-purple-200 dark:border-purple-900/50 hover:shadow-xl hover:border-purple-400 dark:hover:border-purple-700 transition-all relative overflow-hidden">
                 {/* Badge de ranking */}
                 {index < 3 && (
                   <div className="absolute top-2 left-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center space-x-1 z-10">
@@ -108,26 +108,26 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
                 )}
 
                 {/* Badge de categoría */}
-                <span className="absolute top-2 right-2 bg-purple-100 text-purple-800 text-xs font-semibold px-3 py-1 rounded-full z-10">
+                <span className="absolute top-2 right-2 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 text-xs font-semibold px-3 py-1 rounded-full z-10">
                   {producto.categoria}
                 </span>
 
                 {/* Imagen del producto */}
                 <ProductImage
                   producto={producto}
-                  className="w-full h-40 p-4 bg-gradient-to-br from-purple-50 to-blue-50 rounded-t-lg"
+                  className="w-full h-40 p-4 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-t-lg"
                 />
 
                 {/* Contenido */}
                 <div className="px-6 pb-6">
                   <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-xl font-bold text-gray-800 flex-1">{producto.nombre}</h3>
-                    <span className="text-2xl font-bold text-gray-800 ml-2">${producto.precio}</span>
+                    <h3 className="text-xl font-bold text-foreground flex-1">{producto.nombre}</h3>
+                    <span className="text-2xl font-bold text-foreground ml-2">${producto.precio}</span>
                   </div>
                   
                   {/* Razón de recomendación */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mb-3">
-                    <p className="text-xs text-blue-800 font-medium">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900/50 rounded-lg p-2 mb-3">
+                    <p className="text-xs text-blue-800 dark:text-blue-200 font-medium">
                       💡 {producto.razon || 'Recomendado para ti'}
                     </p>
                   </div>
@@ -135,12 +135,12 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
                   {/* Score de IA */}
                   <div className="mb-4">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-gray-600 font-semibold">Nivel de coincidencia:</span>
-                      <span className="text-sm font-bold text-purple-600">
+                      <span className="text-xs text-muted font-semibold">Nivel de coincidencia:</span>
+                      <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
                         {(producto.score * 100).toFixed(0)}%
                       </span>
                     </div>
-                    <div className="relative bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div className="relative bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
                       <div 
                         className="absolute top-0 left-0 h-full bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 rounded-full transition-all duration-1000 ease-out"
                         style={{ width: `${producto.score * 100}%` }}
@@ -153,7 +153,7 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
                   {/* Tags */}
                   <div className="flex flex-wrap gap-1 mb-4">
                     {producto.tags.slice(0, 3).map(tag => (
-                      <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                      <span key={tag} className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-1 rounded">
                         #{tag}
                       </span>
                     ))}
@@ -180,15 +180,15 @@ const Recomendaciones = ({ recomendaciones, historialCompras, onAddToCart, onBuy
           </div>
 
           {/* Mensaje educativo */}
-          <div className="mt-8 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-6">
+          <div className="mt-8 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-900/30 rounded-lg p-6">
             <div className="flex items-start space-x-4">
-              <Brain size={32} className="text-purple-600 flex-shrink-0" />
+              <Brain size={32} className="text-purple-600 dark:text-purple-400 flex-shrink-0" />
               <div>
-                <h4 className="font-bold text-gray-800 mb-2">¿Cómo funciona el sistema de recomendaciones?</h4>
-                <p className="text-sm text-gray-700 mb-2">
+                <h4 className="font-bold text-foreground mb-2">¿Cómo funciona el sistema de recomendaciones?</h4>
+                <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
                   Nuestra Red Neuronal Artificial analiza tus compras en tiempo real y aprende de tus preferencias:
                 </p>
-                <ul className="text-sm text-gray-600 space-y-1">
+                <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                   <li>✓ Detecta patrones en las categorías que prefieres</li>
                   <li>✓ Analiza tu rango de precios habitual</li>
                   <li>✓ Identifica tags y características comunes</li>
