@@ -4,6 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistema de Recomendación IA</title>
+  <script>
+    (function () {
+      try {
+        const theme = localStorage.getItem('techstore-theme');
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {
+        // Ignorar errores de localStorage
+      }
+    })();
+  </script>
 </head>
 <body>
   <div id="root"></div>
