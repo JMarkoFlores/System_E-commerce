@@ -379,5 +379,28 @@
     "Fotografía": "Photography",
     "Streaming": "Streaming",
     "Accesorios": "Accessories"
+  },
+  "chatbot": {
+    "title": "TechBot",
+    "online": "Online · Groq AI",
+    "thinking": "Thinking...",
+    "clearChat": "Clear chat",
+    "voiceResponses": "Voice responses",
+    "voiceInput": "Voice",
+    "stopListening": "Stop",
+    "listening": "Listening...",
+    "placeholder": "Write a message...",
+    "close": "Close chat",
+    "open": "Open assistant",
+    "poweredBy": "Powered by",
+    "voiceNotSupported": "Voice not supported in this browser.",
+    "connectionError": "Connection error",
+    "chatCleared": "👋 Chat cleared! How can I help you?",
+    "suggestions": {
+      "findProducts": "Find products 🛒",
+      "howAI": "How does AI work? 🤖",
+      "paymentMethods": "Payment methods 💳",
+      "myOrders": "My orders 📦"
+    }
   }
 }

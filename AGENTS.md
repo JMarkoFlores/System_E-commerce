@@ -363,5 +363,58 @@ El idioma seleccionado se persiste bajo la clave `techstore-lang`.
 Todos los views y componentes tienen `useTranslation` integrado:
 - Views de cliente: Login, Catálogo, Carrito, Historial, Recomendaciones
 - Views de admin: Dashboard, Productos, Usuarios, Gráficas, Métricas, Reportes, **Pruebas**
-- Componentes: CustomerLayout, AdminLayout, PaymentModal, ThemeToggle, ProductCard, LanguageSelector
+- Componentes: CustomerLayout, AdminLayout, PaymentModal, ThemeToggle, ProductCard, LanguageSelector, **Chatbot**
+
+---
+
+## 15. Chatbot de Asistencia (TechBot)
+
+TechBot es un asistente virtual con soporte de voz y texto integrado en el sistema, disponible para todos los usuarios autenticados.
+
+### Archivos clave
+
+| Archivo | Propósito |
+|---------|-----------|
+| `src/components/common/Chatbot.jsx` | Componente completo del chatbot |
+| `src/App.jsx` | Monta el `<Chatbot />` globalmente cuando `user` está autenticado |
+| `src/locales/es.json` → `chatbot.*` | Traducciones en español del chatbot |
+| `src/locales/en.json` → `chatbot.*` | Traducciones en inglés del chatbot |
+
+### Stack del chatbot
+
+| Capa | Tecnología |
+|------|-----------|
+| LLM | **Groq Cloud** — LLaMA 3.3 70B Versatile |
+| API Key | Configurada en `.env` como `VITE_GROQ_API_KEY` |
+| Voz entrada | Web Speech API (`SpeechRecognition`) |
+| Voz salida | Web Speech Synthesis API (`SpeechSynthesisUtterance`) |
+| i18n | Responde en ES o EN según `i18n.language` |
+
+### Características
+
+- **Botón flotante** (bottom-right) con contador de mensajes no leídos
+- **Historial conversacional** — envía los últimos 12 mensajes como contexto a Groq
+- **System prompt dinámico** — incluye el rol del usuario (cliente/admin) y el idioma activo
+- **Modo voz entrada** — activa el micrófono con Web Speech API
+- **Modo voz salida (TTS)** — toggle para que el bot responda en voz alta
+- **Sugerencias rápidas** — 4 botones de inicio que desaparecen al comenzar la conversación
+- **Indicador de escritura** — 3 puntos animados mientras espera respuesta de Groq
+- **Render markdown básico** — negritas (`**texto**`) e itálicas (`*texto*`)
+- **Limpiar chat** — botón para reiniciar la conversación
+- **Soporte dark/light mode**
+
+### System Prompt
+
+El prompt del sistema se construye dinámicamente en `buildSystemPrompt(lang, user)` e incluye:
+- Contexto de la tienda (categorías, funcionalidades)
+- El email y rol del usuario activo
+- Idioma activo (responde en ES o EN automáticamente)
+
+### Reglas para agentes
+
+1. El chatbot no tiene estado persistido; el historial se pierde al recargar.
+2. Para cambiar el modelo Groq, modificar la constante `GROQ_MODEL` en `Chatbot.jsx`.
+3. Para mejorar el contexto del bot, editar la función `buildSystemPrompt` en `Chatbot.jsx`.
+4. La API key está embebida directamente en el frontend (solo válido en demo/desarrollo).
+5. El chatbot aparece solo si `user` existe (no en la pantalla de login).
 

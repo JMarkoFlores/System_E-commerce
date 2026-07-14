@@ -22,6 +22,7 @@ import AdminGraficas from './views/admin/AdminGraficas';
 import AdminMetricas from './views/admin/AdminMetricas';
 import AdminReportes from './views/admin/AdminReportes';
 import AdminPruebas from './views/admin/AdminPruebas';
+import Chatbot from './components/common/Chatbot';
 
 // Número dinámico de recomendaciones
 const calcularNumeroRecomendaciones = (historialCompras) => {
@@ -253,6 +254,9 @@ function App() {
           onConfirm={procesarPago}
         />
       )}
+
+      {/* Chatbot flotante — visible solo cuando hay sesión */}
+      {user && <Chatbot />}
     </>
   );
 }
