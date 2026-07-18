@@ -94,7 +94,7 @@
   },
   "recommendations": {
     "title": "Recomendaciones Personalizadas con IA",
-    "subtitle": "Red Neuronal Artificial • Generación #{{generation}} • Aprendizaje continuo",
+    "subtitle": "• Generación #{{generation}} • Aprendizaje continuo",
     "description": "El sistema aprende de cada compra para mejorar las recomendaciones",
     "modelAccuracy": "Precisión del modelo",
     "emptyTitle": "¡Comienza a comprar para obtener recomendaciones!",
@@ -218,7 +218,7 @@
   },
   "metrics": {
     "title": "Métricas de Evaluación del Modelo",
-    "subtitle": "Análisis del rendimiento de la Red Neuronal con TensorFlow.js",
+    "subtitle": "Análisis del rendimiento",
     "generation": "Generación",
     "modelStatus": "Estado del Modelo",
     "activeRecommendations": "Recomendaciones Activas",
@@ -301,7 +301,7 @@
   },
   "tests": {
     "title": "Módulo de Pruebas",
-    "subtitle": "Evaluación estadística robusta del modelo de recomendación con IA",
+    "subtitle": "Evaluación estadística robusta del modelo de recomendación",
     "config": "Configuración de la evaluación",
     "syntheticUsers": "Usuarios sintéticos",
     "usersHint": "Recomendado: ≥30 para t-test válido",
@@ -314,7 +314,7 @@
     "exportExcel": "Exportar Excel",
     "generatingUsers": "Generando usuarios sintéticos...",
     "initializing": "Inicializando modelos...",
-    "evaluatingNN": "Evaluando Red Neuronal (esto puede tardar)...",
+    "evaluatingNN": "Evaluando las pruebas (esto puede tardar)...",
     "evaluatingBaselines": "Evaluando baselines...",
     "calculatingCI": "Calculando intervalos de confianza...",
     "runningTests": "Ejecutando tests estadísticos...",
