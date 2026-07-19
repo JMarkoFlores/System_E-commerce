@@ -28,7 +28,7 @@ from evaluation import evaluar_recomendador, comparar_con_baselines
 st.set_page_config(page_title="Módulo de Pruebas - TechStore AI", layout="wide", page_icon="🧪")
 
 st.title("🧪 Evaluación de Modelos de Recomendación")
-st.markdown("Módulo avanzado de pruebas offline para los algoritmos del E-commerce.")
+st.markdown("Módulo avanzado de pruebas para los algoritmos del E-commerce.")
 
 # --- Sidebar Configuration ---
 with st.sidebar:
@@ -50,6 +50,12 @@ with st.sidebar:
 
 if "resultados" not in st.session_state:
     st.session_state.resultados = None
+if "excel_data" not in st.session_state:
+    st.session_state.excel_data = None
+if "pdf_bytes" not in st.session_state:
+    st.session_state.pdf_bytes = None
+if "word_data" not in st.session_state:
+    st.session_state.word_data = None
 
 # --- Ejecución ---
 if run_btn:
@@ -142,6 +148,318 @@ if run_btn:
                 json.dump(react_data, f, ensure_ascii=False, indent=2)
         except Exception as e:
             st.warning(f"No se pudo autoguardar el JSON para React: {e}")
+
+    # --- Generar documentos una sola vez y cachear en session_state ---
+    with st.spinner("Preparando archivos de descarga..."):
+        _res   = st.session_state.resultados
+        _stats = _res["stats"]
+        _baselines = _res["resultados_baselines"]
+        _mejor = _res["mejor_modelo"]
+        _tests = _res["tests_por_metrica"]
+        _scores = _res["scores"]
+
+        _metricas_visibles = [
+            {"key": "hitRate",   "label": "Hit Rate@K",  "sufijo": "%"},
+            {"key": "precision", "label": "Precision@K", "sufijo": "%"},
+            {"key": "recall",   "label": "Recall@K",    "sufijo": "%"},
+            {"key": "f1",       "label": "F1@K",        "sufijo": "%"},
+            {"key": "mrr",      "label": "MRR",         "sufijo": ""},
+            {"key": "map",      "label": "MAP",         "sufijo": ""},
+            {"key": "ndcg",     "label": "NDCG@K",     "sufijo": "%"},
+            {"key": "coverage", "label": "Coverage",   "sufijo": "%"},
+            {"key": "diversity","label": "Diversity",  "sufijo": "%"},
+            {"key": "novelty",  "label": "Novelty",    "sufijo": "%"},
+        ]
+
+        # -- Generar figuras para Excel y PDF --
+        _COLORES = ['#EF4444', '#F59E0B', '#10B981', '#EC4899', '#14B8A6', '#8B5CF6']
+        _tabla_data = []
+        for _m in _metricas_visibles:
+            _row = {"Metrica": _m["label"]}
+            for _nombre, _resultado in _baselines.items():
+                _row[_nombre] = round(_resultado.get(_m["key"], 0), 4)
+            _tabla_data.append(_row)
+        _df_metricas = pd.DataFrame(_tabla_data).set_index("Metrica")
+
+        _df_melted = _df_metricas.reset_index().melt(id_vars=["Metrica"], var_name="Modelo", value_name="Valor")
+        _fig_bar = px.bar(_df_melted, x="Metrica", y="Valor", color="Modelo", barmode="group",
+                          title="Comparacion de Metricas", color_discrete_sequence=_COLORES)
+
+        _radar_keys = ['hitRate', 'precision', 'recall', 'f1', 'ndcg', 'diversity']
+        _fig_radar = go.Figure()
+        for _i, (_nombre, _resultado) in enumerate(_baselines.items()):
+            _vals = [_resultado.get(_k, 0) for _k in _radar_keys]
+            _vals.append(_vals[0])
+            _fig_radar.add_trace(go.Scatterpolar(
+                r=_vals, theta=_radar_keys + [_radar_keys[0]],
+                fill='toself', name=_nombre,
+                line_color=_COLORES[_i % len(_COLORES)]
+            ))
+        _fig_radar.update_layout(
+            polar=dict(radialaxis=dict(visible=True, range=[0, 100])),
+            showlegend=True, title="Perfil de Rendimiento (Radar)"
+        )
+
+        # -- EXCEL --
+        try:
+            _tabla_data = []
+            for _m in _metricas_visibles:
+                _row = {"Metrica": _m["label"]}
+                for _nombre, _resultado in _baselines.items():
+                    _row[_nombre] = round(_resultado.get(_m["key"], 0), 4)
+                _tabla_data.append(_row)
+            _df_metricas = pd.DataFrame(_tabla_data).set_index("Metrica")
+
+            _out_xl = io.BytesIO()
+            with pd.ExcelWriter(_out_xl, engine="xlsxwriter") as _writer:
+                _wb = _writer.book
+                _hfmt = _wb.add_format({"bold": True, "text_wrap": True, "valign": "center", "align": "center", "fg_color": "#4F46E5", "font_color": "white", "border": 1})
+                _cfmt = _wb.add_format({"border": 1, "align": "center"})
+                _pfmt = _wb.add_format({"border": 1, "align": "center", "num_format": "0.00%"})
+                _nfmt = _wb.add_format({"border": 1, "align": "center", "num_format": "0.0000"})
+                _tfmt = _wb.add_format({"bold": True, "font_size": 16, "font_color": "#166534", "align": "center", "valign": "center", "fg_color": "#DCFCE7", "border": 1})
+                _sfmt = _wb.add_format({"bold": True, "font_size": 12, "font_color": "#374151"})
+                _txtfmt = _wb.add_format({"text_wrap": True, "valign": "top"})
+
+                _ws_res = _wb.add_worksheet("Resumen Ejecutivo")
+                _ws_res.merge_range("B2:J4", f"MEJOR MODELO: {_mejor['nombre']} (Score: {round(_mejor['score'], 2)} / 100)", _tfmt)
+                _ws_res.write("B6", "Interpretacion de los Resultados:", _sfmt)
+                _txt_bar = f"Barras: '{_mejor['nombre']}' lidera con NDCG {round(_mejor['res']['ndcg'],2)}% y F1 {round(_mejor['res']['f1'],2)}%."
+                _txt_rad = f"Radar: '{_mejor['nombre']}' balance Precision {round(_mejor['res']['precision'],2)}% y Recall {round(_mejor['res']['recall'],2)}%."
+                _ws_res.merge_range("B8:E11", _txt_bar, _txtfmt)
+                _ws_res.merge_range("G8:J11", _txt_rad, _txtfmt)
+
+                # Insertar graficas en Excel
+                try:
+                    _tmp_bar_xl = "_tmp_bar_xl.png"
+                    _tmp_rad_xl = "_tmp_rad_xl.png"
+                    _fig_bar.write_image(_tmp_bar_xl, width=500, height=350)
+                    _fig_radar.write_image(_tmp_rad_xl, width=500, height=350)
+                    _ws_res.insert_image("B13", _tmp_bar_xl)
+                    _ws_res.insert_image("G13", _tmp_rad_xl)
+                except Exception:
+                    _ws_res.write("B13", "(Graficos requieren kaleido)")
+
+                def _write_df(df, sname, is_metric=False):
+                    _ws = _wb.add_worksheet(sname)
+                    for ci, cv in enumerate(df.columns.values):
+                        _ws.write(0, ci, str(cv), _hfmt)
+                    for ri in range(len(df)):
+                        _rdata = df.iloc[ri]
+                        _is_mrr = is_metric and "Metrica" in df.columns and _rdata["Metrica"] in ["MRR", "MAP"]
+                        for ci in range(len(df.columns)):
+                            _v = _rdata.iloc[ci]
+                            if isinstance(_v, (dict, list)):
+                                _v = str(_v)
+                            if ci == 0 or not isinstance(_v, (int, float)):
+                                _ws.write(ri + 1, ci, _v if not pd.isna(_v) else "", _cfmt)
+                            elif is_metric:
+                                _ws.write(ri + 1, ci, _v if _is_mrr else _v / 100.0, _nfmt if _is_mrr else _pfmt)
+                            else:
+                                _ws.write(ri + 1, ci, _v, _cfmt if sname == "Dataset" else _nfmt)
+                    for ci, cv in enumerate(df.columns.values):
+                        _clen = max(df.iloc[:, ci].astype(str).map(len).max(), len(str(cv))) + 4
+                        _ws.set_column(ci, ci, _clen)
+
+                _write_df(pd.DataFrame([_stats]), "Dataset")
+                _write_df(_df_metricas.reset_index(), "Metricas", is_metric=True)
+                _all_tests = []
+                for _mk, _td in _tests.items():
+                    for _bn, _tv in _td.items():
+                        _all_tests.append({"Metrica": _mk, "Modelo": _bn, "T-Statistic": _tv["ttest"]["tStatistic"], "T-pVal": _tv["ttest"]["pValue"], "W-pVal": _tv["wilcoxon"]["pValue"], "Cohens D": _tv["cohensD"]})
+                _write_df(pd.DataFrame(_all_tests), "Tests Estadisticos")
+
+            st.session_state.excel_data = _out_xl.getvalue()
+            # Limpiar temporales de Excel
+            try:
+                os.remove("_tmp_bar_xl.png")
+                os.remove("_tmp_rad_xl.png")
+            except Exception:
+                pass
+        except Exception as _e:
+            st.session_state.excel_data = None
+            st.warning(f"Excel no disponible: {_e}")
+
+        # -- PDF --
+        try:
+            class _PDF(FPDF):
+                def header(self):
+                    self.set_fill_color(79, 70, 229)
+                    self.rect(0, 0, 210, 25, "F")
+                    self.set_font("Helvetica", "B", 18)
+                    self.set_text_color(255, 255, 255)
+                    self.set_y(8)
+                    self.cell(0, 10, "TechStore AI - Reporte Avanzado", border=0, ln=1, align="C")
+                    self.ln(10)
+                def footer(self):
+                    self.set_y(-15)
+                    self.set_fill_color(79, 70, 229)
+                    self.rect(10, 282, 190, 1, "F")
+                    self.set_font("Helvetica", "I", 8)
+                    self.set_text_color(100, 100, 100)
+                    self.cell(0, 10, f"Pagina {self.page_no()}", 0, 0, "C")
+
+            _pdf = _PDF()
+            _pdf.add_page()
+            _pdf.set_font("Helvetica", size=10)
+            _pdf.set_text_color(80, 80, 80)
+            _pdf.cell(0, 6, txt=f"Fecha: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=1)
+            _pdf.cell(0, 6, txt=f"Usuarios: {_stats['totalUsuarios']} | Compras: {_stats['totalCompras']}", ln=1)
+            _pdf.ln(5)
+            _pdf.set_fill_color(240, 253, 244)
+            _pdf.set_draw_color(74, 222, 128)
+            _pdf.set_line_width(0.5)
+            _pdf.rect(10, _pdf.get_y(), 190, 15, "DF")
+            _pdf.set_y(_pdf.get_y() + 2)
+            _pdf.set_font("Helvetica", "B", 12)
+            _pdf.set_text_color(22, 101, 52)
+            _pdf.cell(0, 10, txt=f" MEJOR MODELO: {_mejor['nombre']} (Score: {round(_mejor['score'],2)}/100)", ln=1, align="C")
+            _pdf.ln(8)
+            _pdf.set_font("Helvetica", "B", 14)
+            _pdf.set_text_color(30, 30, 30)
+            _pdf.cell(0, 10, txt="Tabla Comparativa de Metricas (Top 3)", ln=1)
+            _pdf.set_font("Helvetica", size=10)
+            _top3 = _scores[:3]
+            with _pdf.table(text_align="CENTER", col_widths=(40, 30, 30, 30, 30), borders_layout="ALL") as _tbl:
+                _hr = _tbl.row()
+                for _ht in ["Modelo", "Hit Rate", "Precision", "NDCG", "Score Final"]:
+                    _pdf.set_fill_color(79, 70, 229)
+                    _pdf.set_text_color(255, 255, 255)
+                    _hr.cell(_ht)
+                _pdf.set_text_color(50, 50, 50)
+                for _i, _s in enumerate(_top3):
+                    _row = _tbl.row()
+                    _pdf.set_fill_color(245, 245, 250) if _i % 2 == 0 else _pdf.set_fill_color(255, 255, 255)
+                    _mr = _s["res"]
+                    _row.cell(_s["nombre"])
+                    _row.cell(f"{round(_mr['hitRate'],2)}%")
+                    _row.cell(f"{round(_mr['precision'],2)}%")
+                    _row.cell(f"{round(_mr['ndcg'],2)}%")
+                    _row.cell(f"{round(_s['score'],2)}/100")
+            _pdf.ln(5)
+            if len(_top3) > 1:
+                _pdf.set_font("Helvetica", size=10)
+                _pdf.set_text_color(60, 60, 60)
+                _pdf.multi_cell(0, 5, txt=f"'{_top3[0]['nombre']}' lidera con {round(_top3[0]['score'],2)}/100, superando a '{_top3[1]['nombre']}' por {round(_top3[0]['score']-_top3[1]['score'],2)} pts.")
+            _pdf.ln(8)
+            _pdf.set_font("Helvetica", "B", 14)
+            _pdf.set_text_color(30, 30, 30)
+            _pdf.cell(0, 10, txt="Visualizaciones de Rendimiento", ln=1)
+            try:
+                _tmp_bar_pdf = "_tmp_bar_pdf.png"
+                _tmp_rad_pdf = "_tmp_rad_pdf.png"
+                _fig_bar.write_image(_tmp_bar_pdf, width=600, height=400)
+                _fig_radar.write_image(_tmp_rad_pdf, width=600, height=400)
+                _y_before = _pdf.get_y()
+                _pdf.image(_tmp_bar_pdf, x=10, y=_y_before, w=90)
+                _pdf.image(_tmp_rad_pdf, x=105, y=_y_before, w=90)
+                _pdf.set_y(_y_before + 65)
+                os.remove(_tmp_bar_pdf)
+                os.remove(_tmp_rad_pdf)
+            except Exception:
+                _pdf.set_font("Helvetica", "I", 10)
+                _pdf.set_text_color(180, 0, 0)
+                _pdf.cell(0, 8, txt="(Graficos no disponibles - requiere kaleido)", ln=1)
+            _pdf.ln(5)
+            _pdf.set_font("Helvetica", "B", 14)
+            _pdf.set_text_color(30, 30, 30)
+            _pdf.cell(0, 10, txt="Conclusion", ln=1)
+            _pdf.set_font("Helvetica", size=10)
+            _pdf.set_text_color(60, 60, 60)
+            _pdf.multi_cell(0, 6, txt=f"El modelo '{_mejor['nombre']}' obtuvo score {round(_mejor['score'],2)}/100, Hit Rate {round(_mejor['res']['hitRate'],2)}%, Precision {round(_mejor['res']['precision'],2)}%, NDCG {round(_mejor['res']['ndcg'],2)}%, F1 {round(_mejor['res']['f1'],2)}%.")
+            st.session_state.pdf_bytes = bytes(_pdf.output())
+        except Exception as _e:
+            st.session_state.pdf_bytes = None
+            st.warning(f"PDF no disponible: {_e}")
+
+        # -- WORD --
+        try:
+            def _set_cell_bg(_cell, _hex):
+                _tc = _cell._tc
+                _tcPr = _tc.get_or_add_tcPr()
+                _shd = OxmlElement("w:shd")
+                _shd.set(qn("w:val"), "clear")
+                _shd.set(qn("w:color"), "auto")
+                _shd.set(qn("w:fill"), _hex)
+                _tcPr.append(_shd)
+
+            _doc = Document()
+            _doc.styles["Normal"].font.name = "Calibri"
+            _doc.styles["Normal"].font.size = Pt(11)
+            _tit = _doc.add_heading("TechStore AI - Reporte de Evaluacion de Modelos", level=0)
+            _tit.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            _tit.runs[0].font.color.rgb = RGBColor(0x4F, 0x46, 0xE5)
+            _doc.add_paragraph(f"Fecha: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}")
+            _doc.add_paragraph(f"Usuarios: {_stats['totalUsuarios']}  |  Compras: {_stats['totalCompras']}  |  Top-K: {top_k}")
+            _doc.add_paragraph()
+            _pv = _doc.add_paragraph()
+            _pv.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            _rv = _pv.add_run(f"MEJOR MODELO: {_mejor['nombre']}  -  Score: {round(_mejor['score'],2)} / 100")
+            _rv.bold = True; _rv.font.size = Pt(13); _rv.font.color.rgb = RGBColor(0x16, 0x65, 0x34)
+            _doc.add_paragraph()
+
+            _doc.add_heading("1. Estadisticas del Dataset", level=1)
+            _ts = _doc.add_table(rows=2, cols=3)
+            _ts.style = "Table Grid"
+            for _i, (_h, _v) in enumerate(zip(["Usuarios", "Compras", "Promedio"],[str(_stats["totalUsuarios"]),str(_stats["totalCompras"]),str(_stats["promedioCompras"])])):
+                _c = _ts.cell(0, _i); _c.text = _h; _set_cell_bg(_c, "4F46E5")
+                _c.paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF,0xFF,0xFF); _c.paragraphs[0].runs[0].bold = True
+                _ts.cell(1, _i).text = _v
+            _doc.add_paragraph()
+
+            _doc.add_heading("2. Comparativa de Metricas", level=1)
+            _ml = list(_baselines.keys())
+            _tm = _doc.add_table(rows=len(_metricas_visibles)+1, cols=len(_ml)+1)
+            _tm.style = "Table Grid"
+            _c0 = _tm.cell(0,0); _c0.text = "Metrica"; _set_cell_bg(_c0,"4F46E5")
+            _c0.paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF,0xFF,0xFF); _c0.paragraphs[0].runs[0].bold = True
+            for _j,_mn in enumerate(_ml):
+                _c=_tm.cell(0,_j+1); _c.text=_mn; _set_cell_bg(_c,"4F46E5")
+                _c.paragraphs[0].runs[0].font.color.rgb=RGBColor(0xFF,0xFF,0xFF); _c.paragraphs[0].runs[0].bold=True
+            for _i,_m in enumerate(_metricas_visibles):
+                _tm.cell(_i+1,0).text=_m["label"]
+                _vf=[_baselines[_mn].get(_m["key"],0) for _mn in _ml]
+                _mv=max(_vf) if _vf else 0
+                for _j,_val in enumerate(_vf):
+                    _cl=_tm.cell(_i+1,_j+1); _cl.text=f"{round(_val,4)}"
+                    if _val==_mv: _set_cell_bg(_cl,"DCFCE7")
+            _doc.add_paragraph()
+
+            _doc.add_heading("3. Ranking de Modelos", level=1)
+            _tr=_doc.add_table(rows=len(_scores)+1,cols=3); _tr.style="Table Grid"
+            for _j,_h in enumerate(["Pos","Modelo","Score"]):
+                _c=_tr.cell(0,_j); _c.text=_h; _set_cell_bg(_c,"4F46E5")
+                _c.paragraphs[0].runs[0].font.color.rgb=RGBColor(0xFF,0xFF,0xFF); _c.paragraphs[0].runs[0].bold=True
+            for _i,_s in enumerate(_scores):
+                _tr.cell(_i+1,0).text=f"#{_i+1}"; _tr.cell(_i+1,1).text=_s["nombre"]; _tr.cell(_i+1,2).text=f"{round(_s['score'],2)}"
+                if _i==0: _set_cell_bg(_tr.cell(_i+1,1),"DCFCE7"); _set_cell_bg(_tr.cell(_i+1,2),"DCFCE7")
+            _doc.add_paragraph()
+
+            _doc.add_heading("4. Tests Estadisticos", level=1)
+            _doc.add_paragraph(f"Ganador '{_mejor['nombre']}' vs demas (p<0.05 = significativo).")
+            for _mk,_ml2 in {"hitRate":"Hit Rate","precision":"Precision","recall":"Recall","ndcg":"NDCG"}.items():
+                _doc.add_heading(f"Metrica: {_ml2}", level=2)
+                _tdw=_tests[_mk]
+                _tt=_doc.add_table(rows=len(_tdw)+1,cols=5); _tt.style="Table Grid"
+                for _j,_h in enumerate(["Modelo","T-Stat","p-value","Cohen's d","Sig."]):
+                    _c=_tt.cell(0,_j); _c.text=_h; _set_cell_bg(_c,"6D28D9")
+                    _c.paragraphs[0].runs[0].font.color.rgb=RGBColor(0xFF,0xFF,0xFF); _c.paragraphs[0].runs[0].bold=True
+                for _i,(_bn,_t) in enumerate(_tdw.items()):
+                    _sig=_t["ttest"]["significant"] or _t["wilcoxon"]["significant"]
+                    _tt.cell(_i+1,0).text=_bn; _tt.cell(_i+1,1).text=str(round(_t["ttest"]["tStatistic"],4))
+                    _tt.cell(_i+1,2).text=str(round(_t["ttest"]["pValue"],4)); _tt.cell(_i+1,3).text=str(round(_t["cohensD"],4))
+                    _sc=_tt.cell(_i+1,4); _sc.text="Si" if _sig else "No"
+                    if _sig: _set_cell_bg(_sc,"DCFCE7")
+                _doc.add_paragraph()
+
+            _doc.add_heading("5. Conclusion", level=1)
+            _doc.add_paragraph(f"El modelo '{_mejor['nombre']}' obtuvo {round(_mejor['score'],2)}/100, Hit Rate {round(_mejor['res']['hitRate'],2)}%, Precision {round(_mejor['res']['precision'],2)}%, NDCG {round(_mejor['res']['ndcg'],2)}%, F1 {round(_mejor['res']['f1'],2)}%.")
+            _wb2 = io.BytesIO()
+            _doc.save(_wb2)
+            st.session_state.word_data = _wb2.getvalue()
+        except Exception as _e:
+            st.session_state.word_data = None
+            st.warning(f"Word no disponible: {_e}")
 
 # --- Visualización ---
 if st.session_state.resultados:
@@ -329,394 +647,40 @@ if st.session_state.resultados:
     
     # 6. Exportación
     st.subheader("📥 Exportar Resultados")
-    
     col_pdf, col_excel, col_word = st.columns(3)
-    
-    # EXCEL
-    output_excel = io.BytesIO()
-    with pd.ExcelWriter(output_excel, engine='xlsxwriter') as writer:
-        workbook = writer.book
-        
-        # Formatos Avanzados
-        header_format = workbook.add_format({
-            'bold': True,
-            'text_wrap': True,
-            'valign': 'center',
-            'align': 'center',
-            'fg_color': '#4F46E5',
-            'font_color': 'white',
-            'border': 1
-        })
-        cell_format = workbook.add_format({'border': 1, 'align': 'center'})
-        percent_format = workbook.add_format({'border': 1, 'align': 'center', 'num_format': '0.00%'})
-        number_format = workbook.add_format({'border': 1, 'align': 'center', 'num_format': '0.0000'})
-        title_format = workbook.add_format({
-            'bold': True, 'font_size': 16, 'font_color': '#166534', 
-            'align': 'center', 'valign': 'center', 'fg_color': '#DCFCE7', 'border': 1
-        })
-        subtitle_format = workbook.add_format({'bold': True, 'font_size': 12, 'font_color': '#374151'})
-        text_format = workbook.add_format({'text_wrap': True, 'valign': 'top'})
 
-        # 1. Pestaña "Resumen Ejecutivo"
-        ws_resumen = workbook.add_worksheet("Resumen Ejecutivo")
-        
-        # Escribir Veredicto
-        ws_resumen.merge_range('B2:J4', f"🏆 MEJOR MODELO: {mejor['nombre']} (Score: {round(mejor['score'], 2)} / 100)", title_format)
-        
-        ws_resumen.write('B6', "Interpretación de los Resultados y Gráficas:", subtitle_format)
-        
-        # Textos Adaptativos
-        txt_radar = f"En el Gráfico de Radar (derecha), se observa cómo '{mejor['nombre']}' ocupa una mayor área o mantiene un polígono equilibrado. Por ejemplo, logra un balance sólido entre Precision ({round(mejor['res']['precision'], 2)}%) y Recall ({round(mejor['res']['recall'], 2)}%), indicando exactitud sin sacrificar descubrimiento."
-        txt_bar = f"El Gráfico de Barras (izquierda) demuestra de forma clara cómo el modelo ganador mantiene sus puntuaciones altas. Con un NDCG de {round(mejor['res']['ndcg'], 2)}% y F1 de {round(mejor['res']['f1'], 2)}%, supera masivamente a algoritmos primitivos en personalización."
-        
-        ws_resumen.merge_range('B8:E11', txt_bar, text_format)
-        ws_resumen.merge_range('G8:J11', txt_radar, text_format)
-        
-        # Guardar e insertar Gráficos
-        temp_bar_xl = "temp_bar_xl.png"
-        temp_radar_xl = "temp_radar_xl.png"
-        
-        try:
-            fig_bar.write_image(temp_bar_xl, width=500, height=350)
-            fig_radar.write_image(temp_radar_xl, width=500, height=350)
-            
-            ws_resumen.insert_image('B13', temp_bar_xl)
-            ws_resumen.insert_image('G13', temp_radar_xl)
-        except Exception as e:
-            ws_resumen.write('B13', f"No se pudieron cargar los gráficos: {e}")
-
-        # Función Helper para exportar dataframes con estilos precisos celda por celda
-        def write_styled_df(df, sheet_name, is_metric_table=False):
-            ws = workbook.add_worksheet(sheet_name)
-            
-            # Escribir Headers
-            for col_num, value in enumerate(df.columns.values):
-                ws.write(0, col_num, str(value), header_format)
-                
-            # Escribir Filas
-            for row_num in range(len(df)):
-                row_data = df.iloc[row_num]
-                is_mrr = False
-                if is_metric_table and 'Métrica' in df.columns:
-                    is_mrr = row_data['Métrica'] in ['MRR', 'MAP']
-                
-                for col_num in range(len(df.columns)):
-                    val = row_data.iloc[col_num]
-                    
-                    if isinstance(val, (dict, list)):
-                        val = str(val)
-                        
-                    if col_num == 0 or (not isinstance(val, (int, float))):
-                        ws.write(row_num + 1, col_num, val if not pd.isna(val) else "", cell_format)
-                    else:
-                        if is_metric_table:
-                            if is_mrr:
-                                ws.write(row_num + 1, col_num, val, number_format)
-                            else:
-                                # Convertir a porcentaje real de Excel
-                                ws.write(row_num + 1, col_num, val / 100.0, percent_format)
-                        else:
-                            # Para tests estadisticos y dataset
-                            if sheet_name == "Dataset":
-                                ws.write(row_num + 1, col_num, val, cell_format)
-                            else:
-                                ws.write(row_num + 1, col_num, val, number_format)
-                            
-            # Auto-ajustar ancho de columnas
-            for col_num, value in enumerate(df.columns.values):
-                col_len = max(df.iloc[:, col_num].astype(str).map(len).max(), len(str(value))) + 4
-                ws.set_column(col_num, col_num, col_len)
-        
-        # 2. Pestaña Dataset
-        write_styled_df(pd.DataFrame([stats]), "Dataset")
-        
-        # 3. Pestaña Métricas
-        write_styled_df(df_metricas.reset_index(), "Metricas", is_metric_table=True)
-        
-        # 4. Pestaña Tests
-        all_tests = []
-        for m_key, t_data in tests.items():
-            for b_name, t_vals in t_data.items():
-                all_tests.append({
-                    "Métrica": m_key,
-                    "Modelo": b_name,
-                    "T-Statistic": t_vals["ttest"]["tStatistic"],
-                    "T-pVal": t_vals["ttest"]["pValue"],
-                    "W-pVal": t_vals["wilcoxon"]["pValue"],
-                    "Cohens D": t_vals["cohensD"]
-                })
-        write_styled_df(pd.DataFrame(all_tests), "Tests Estadisticos")
-        
-    excel_data = output_excel.getvalue()
-    
-    # Limpieza
-    try:
-        os.remove(temp_bar_xl)
-        os.remove(temp_radar_xl)
-    except:
-        pass
-    
-    with col_excel:
-        st.download_button(
-            label="📊 Descargar Resultados en Excel",
-            data=excel_data,
-            file_name=f"evaluacion_ia_{datetime.datetime.now().strftime('%Y%m%d')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True
-        )
-        
-    # PDF
     with col_pdf:
-        try:
-            class PDF(FPDF):
-                def header(self):
-                    self.set_fill_color(79, 70, 229)
-                    self.rect(0, 0, 210, 25, 'F')
-                    self.set_font('Helvetica', 'B', 18)
-                    self.set_text_color(255, 255, 255)
-                    self.set_y(8)
-                    self.cell(0, 10, 'TechStore AI - Reporte Avanzado', border=0, ln=1, align='C')
-                    self.ln(10)
-                    
-                def footer(self):
-                    self.set_y(-15)
-                    self.set_fill_color(79, 70, 229)
-                    self.rect(10, 282, 190, 1, 'F')
-                    self.set_font('Helvetica', 'I', 8)
-                    self.set_text_color(100, 100, 100)
-                    self.cell(0, 10, f'Pagina {self.page_no()}', 0, 0, 'C')
-                    
-            pdf = PDF()
-            pdf.add_page()
-            
-            pdf.set_font("Helvetica", size=10)
-            pdf.set_text_color(80, 80, 80)
-            pdf.cell(0, 6, txt=f"Fecha: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=1)
-            pdf.cell(0, 6, txt=f"Usuarios Sinteticos: {stats['totalUsuarios']} | Compras: {stats['totalCompras']}", ln=1)
-            pdf.ln(5)
-            
-            pdf.set_fill_color(240, 253, 244)
-            pdf.set_draw_color(74, 222, 128)
-            pdf.set_line_width(0.5)
-            pdf.rect(10, pdf.get_y(), 190, 15, 'DF')
-            pdf.set_y(pdf.get_y() + 2)
-            pdf.set_font("Helvetica", 'B', 12)
-            pdf.set_text_color(22, 101, 52)
-            pdf.cell(0, 10, txt=f" MEJOR MODELO: {mejor['nombre']} (Score: {round(mejor['score'], 2)}/100)", ln=1, align='C')
-            pdf.ln(8)
-            
-            pdf.set_font("Helvetica", 'B', 14)
-            pdf.set_text_color(30, 30, 30)
-            pdf.cell(0, 10, txt="Tabla Comparativa de Metricas (Top 3)", ln=1)
-            
-            pdf.set_font("Helvetica", size=10)
-            top_3 = scores[:3]
-            with pdf.table(text_align="CENTER", col_widths=(40, 30, 30, 30, 30), borders_layout="ALL") as table:
-                header_row = table.row()
-                for header_text in ["Modelo", "Hit Rate", "Precision", "NDCG", "Score Final"]:
-                    pdf.set_fill_color(79, 70, 229)
-                    pdf.set_text_color(255, 255, 255)
-                    header_row.cell(header_text)
-                
-                pdf.set_text_color(50, 50, 50)
-                for i, s in enumerate(top_3):
-                    row = table.row()
-                    if i % 2 == 0:
-                        pdf.set_fill_color(245, 245, 250)
-                    else:
-                        pdf.set_fill_color(255, 255, 255)
-                    m_r = s["res"]
-                    row.cell(s['nombre'])
-                    row.cell(f"{round(m_r['hitRate'],2)}%")
-                    row.cell(f"{round(m_r['precision'],2)}%")
-                    row.cell(f"{round(m_r['ndcg'],2)}%")
-                    row.cell(f"{round(s['score'],2)}/100")
-                    
-            pdf.ln(5)
-            
-            if len(top_3) > 1:
-                diff_score = top_3[0]['score'] - top_3[1]['score']
-                pdf.set_font("Helvetica", size=10)
-                pdf.set_text_color(60, 60, 60)
-                pdf.multi_cell(0, 5, txt=f"El modelo '{top_3[0]['nombre']}' lidera con {round(top_3[0]['score'], 2)}/100, superando al segundo ('{top_3[1]['nombre']}') por {round(diff_score, 2)} puntos.")
-            pdf.ln(8)
-            
-            pdf.set_font("Helvetica", 'B', 14)
-            pdf.set_text_color(30, 30, 30)
-            pdf.cell(0, 10, txt="Visualizaciones de Rendimiento", ln=1)
-            
-            temp_bar = "temp_bar.png"
-            temp_radar = "temp_radar.png"
-            try:
-                fig_bar.write_image(temp_bar, width=600, height=400)
-                fig_radar.write_image(temp_radar, width=600, height=400)
-                y_before = pdf.get_y()
-                pdf.image(temp_bar, x=10, y=y_before, w=90)
-                pdf.image(temp_radar, x=105, y=y_before, w=90)
-                pdf.set_y(y_before + 65)
-                os.remove(temp_bar)
-                os.remove(temp_radar)
-            except Exception:
-                pdf.set_font("Helvetica", 'I', 10)
-                pdf.set_text_color(180, 0, 0)
-                pdf.cell(0, 8, txt="(Graficos no disponibles - requiere kaleido)", ln=1)
-            
-            pdf.set_font("Helvetica", size=10)
-            pdf.set_text_color(60, 60, 60)
-            pdf.multi_cell(0, 6, txt=f"El modelo '{mejor['nombre']}' obtuvo un score de {round(mejor['score'],2)}/100, con Hit Rate {round(mejor['res']['hitRate'],2)}%, Precision {round(mejor['res']['precision'],2)}%, NDCG {round(mejor['res']['ndcg'],2)}% y F1 {round(mejor['res']['f1'],2)}%.")
-            
-            pdf_bytes = bytes(pdf.output())
+        if st.session_state.pdf_bytes:
             st.download_button(
                 label="📄 Descargar Reporte Avanzado (PDF)",
-                data=pdf_bytes,
+                data=st.session_state.pdf_bytes,
                 file_name=f"reporte_avanzado_{datetime.datetime.now().strftime('%Y%m%d')}.pdf",
                 mime="application/pdf",
                 use_container_width=True
             )
-        except Exception as e_pdf:
-            st.error(f"Error generando PDF: {e_pdf}")
+        else:
+            st.info("PDF no disponible")
 
-    # --- WORD ---
-    with col_word:
-        try:
-            def _set_cell_bg(cell, hex_color):
-                """Rellena el fondo de una celda Word con color hex."""
-                tc = cell._tc
-                tcPr = tc.get_or_add_tcPr()
-                shd = OxmlElement('w:shd')
-                shd.set(qn('w:val'), 'clear')
-                shd.set(qn('w:color'), 'auto')
-                shd.set(qn('w:fill'), hex_color)
-                tcPr.append(shd)
-
-            doc = Document()
-            style = doc.styles['Normal']
-            style.font.name = 'Calibri'
-            style.font.size = Pt(11)
-
-            titulo = doc.add_heading('TechStore AI — Reporte de Evaluacion de Modelos', level=0)
-            titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            titulo.runs[0].font.color.rgb = RGBColor(0x4F, 0x46, 0xE5)
-
-            doc.add_paragraph(f"Fecha: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}")
-            doc.add_paragraph(f"Usuarios Sinteticos: {stats['totalUsuarios']}  |  Compras: {stats['totalCompras']}  |  Top-K: {top_k}")
-            doc.add_paragraph()
-
-            p_v = doc.add_paragraph()
-            p_v.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            run_v = p_v.add_run(f"MEJOR MODELO: {mejor['nombre']}  -  Score Global: {round(mejor['score'], 2)} / 100")
-            run_v.bold = True
-            run_v.font.size = Pt(13)
-            run_v.font.color.rgb = RGBColor(0x16, 0x65, 0x34)
-            doc.add_paragraph()
-
-            # Seccion 1: Dataset
-            doc.add_heading('1. Estadisticas del Dataset Sintetico', level=1)
-            tbl_stats = doc.add_table(rows=2, cols=3)
-            tbl_stats.style = 'Table Grid'
-            for i, (h, v) in enumerate(zip(
-                ['Usuarios Generados', 'Total de Compras', 'Promedio Compras/Usuario'],
-                [str(stats['totalUsuarios']), str(stats['totalCompras']), str(stats['promedioCompras'])]
-            )):
-                c = tbl_stats.cell(0, i)
-                c.text = h
-                _set_cell_bg(c, '4F46E5')
-                c.paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
-                c.paragraphs[0].runs[0].bold = True
-                tbl_stats.cell(1, i).text = v
-            doc.add_paragraph()
-
-            # Seccion 2: Metricas
-            doc.add_heading('2. Comparativa de Metricas por Modelo', level=1)
-            modelos_lista = list(baselines.keys())
-            tbl_m = doc.add_table(rows=len(metricas_visibles) + 1, cols=len(modelos_lista) + 1)
-            tbl_m.style = 'Table Grid'
-            c0 = tbl_m.cell(0, 0)
-            c0.text = 'Metrica'
-            _set_cell_bg(c0, '4F46E5')
-            c0.paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
-            c0.paragraphs[0].runs[0].bold = True
-            for j, mn in enumerate(modelos_lista):
-                c = tbl_m.cell(0, j + 1)
-                c.text = mn
-                _set_cell_bg(c, '4F46E5')
-                c.paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
-                c.paragraphs[0].runs[0].bold = True
-            for i, m in enumerate(metricas_visibles):
-                tbl_m.cell(i + 1, 0).text = m['label']
-                vals_f = [baselines[mn].get(m['key'], 0) for mn in modelos_lista]
-                max_v = max(vals_f) if vals_f else 0
-                for j, val in enumerate(vals_f):
-                    cell = tbl_m.cell(i + 1, j + 1)
-                    cell.text = f"{round(val, 4)}"
-                    if val == max_v:
-                        _set_cell_bg(cell, 'DCFCE7')
-            doc.add_paragraph()
-
-            # Seccion 3: Ranking
-            doc.add_heading('3. Ranking Global de Modelos', level=1)
-            tbl_r = doc.add_table(rows=len(scores) + 1, cols=3)
-            tbl_r.style = 'Table Grid'
-            for j, h in enumerate(['Posicion', 'Modelo', 'Score (/100)']):
-                c = tbl_r.cell(0, j)
-                c.text = h
-                _set_cell_bg(c, '4F46E5')
-                c.paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
-                c.paragraphs[0].runs[0].bold = True
-            for i, s in enumerate(scores):
-                tbl_r.cell(i + 1, 0).text = f"#{i + 1}"
-                tbl_r.cell(i + 1, 1).text = s['nombre']
-                tbl_r.cell(i + 1, 2).text = f"{round(s['score'], 2)}"
-                if i == 0:
-                    _set_cell_bg(tbl_r.cell(i + 1, 1), 'DCFCE7')
-                    _set_cell_bg(tbl_r.cell(i + 1, 2), 'DCFCE7')
-            doc.add_paragraph()
-
-            # Seccion 4: Tests Estadisticos
-            doc.add_heading('4. Tests Estadisticos', level=1)
-            doc.add_paragraph(f"Ganador '{mejor['nombre']}' comparado vs los demas (p < 0.05 = significativo).")
-            for mk, ml in {'hitRate': 'Hit Rate', 'precision': 'Precision', 'recall': 'Recall', 'ndcg': 'NDCG'}.items():
-                doc.add_heading(f"  Metrica: {ml}", level=2)
-                tdw = tests[mk]
-                tbl_t = doc.add_table(rows=len(tdw) + 1, cols=5)
-                tbl_t.style = 'Table Grid'
-                for j, h in enumerate(['Modelo', 'T-Statistic', 'p-value T-Test', "Cohen's d", 'Significativo']):
-                    c = tbl_t.cell(0, j)
-                    c.text = h
-                    _set_cell_bg(c, '6D28D9')
-                    c.paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
-                    c.paragraphs[0].runs[0].bold = True
-                for i, (bl_name, t) in enumerate(tdw.items()):
-                    is_sig = t['ttest']['significant'] or t['wilcoxon']['significant']
-                    tbl_t.cell(i + 1, 0).text = bl_name
-                    tbl_t.cell(i + 1, 1).text = str(round(t['ttest']['tStatistic'], 4))
-                    tbl_t.cell(i + 1, 2).text = str(round(t['ttest']['pValue'], 4))
-                    tbl_t.cell(i + 1, 3).text = str(round(t['cohensD'], 4))
-                    sc = tbl_t.cell(i + 1, 4)
-                    sc.text = 'Si' if is_sig else 'No'
-                    if is_sig:
-                        _set_cell_bg(sc, 'DCFCE7')
-                doc.add_paragraph()
-
-            # Seccion 5: Conclusion
-            doc.add_heading('5. Conclusion', level=1)
-            doc.add_paragraph(
-                f"El modelo '{mejor['nombre']}' obtuvo el mayor Score Global ({round(mejor['score'], 2)}/100), "
-                f"con Hit Rate {round(mejor['res']['hitRate'], 2)}%, Precision "
-                f"{round(mejor['res']['precision'], 2)}%, NDCG {round(mejor['res']['ndcg'], 2)}% y "
-                f"F1 {round(mejor['res']['f1'], 2)}%. Es la opcion recomendada para produccion."
+    with col_excel:
+        if st.session_state.excel_data:
+            st.download_button(
+                label="📊 Descargar Resultados en Excel",
+                data=st.session_state.excel_data,
+                file_name=f"evaluacion_ia_{datetime.datetime.now().strftime('%Y%m%d')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True
             )
+        else:
+            st.info("Excel no disponible")
 
-            word_buffer = io.BytesIO()
-            doc.save(word_buffer)
-            word_data = word_buffer.getvalue()
-
+    with col_word:
+        if st.session_state.word_data:
             st.download_button(
                 label="📝 Descargar Reporte en Word",
-                data=word_data,
+                data=st.session_state.word_data,
                 file_name=f"reporte_word_{datetime.datetime.now().strftime('%Y%m%d')}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 use_container_width=True
             )
-        except Exception as e_word:
-            st.error(f"Error generando Word: {e_word}")
+        else:
+            st.info("Word no disponible")
