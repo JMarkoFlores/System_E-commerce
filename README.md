@@ -144,6 +144,17 @@ cd backend
 .\venv\Scripts\python.exe -m pytest app/test_api.py -v
 ```
 
+### Módulo de Pruebas Estadísticas (Streamlit)
+
+```bash
+cd pruebas_streamlit
+# Instalar dependencias requeridas (una vez)
+pip install -r requirements.txt
+# Ejecutar módulo
+streamlit run app.py
+```
+
+
 ---
 
 ## 📁 Estructura del Proyecto
@@ -169,6 +180,12 @@ Tienda_E-Commerce/
 │   ├── venv/                      # Entorno virtual Python
 │   ├── requirements.txt
 │   └── ecommerce.db               # Base de datos SQLite (generada al ejecutar)
+├── pruebas_streamlit/             # Motor Python Analítico
+│   ├── app.py                     # Dashboard de pruebas y exportación (PDF/Excel)
+│   ├── data.py                    # Generación de usuarios/compras sintéticas
+│   ├── evaluation.py              # Evaluador, métricas (NDCG, Hit Rate, etc.) y Baselines
+│   ├── models.py                  # Red Neuronal con Keras/TensorFlow
+│   └── requirements.txt           # Dependencias (streamlit, fpdf2, plotly, kaleido, etc.)
 ├── src/                           # React frontend
 │   ├── main.jsx                   # Punto de entrada
 │   ├── App.jsx                    # Router principal y estado global
