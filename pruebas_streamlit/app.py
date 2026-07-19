@@ -610,7 +610,6 @@ if st.session_state.resultados:
             for bl_name, t in test_data.items():
                 is_sig = t["ttest"]["significant"] or t["wilcoxon"]["significant"]
                 
-                # Texto dinámico adaptativo para Cohen's D
                 abs_d = abs(t["cohensD"])
                 if abs_d >= 0.8:
                     d_mag = "Grande"
@@ -634,12 +633,51 @@ if st.session_state.resultados:
                 })
             st.dataframe(pd.DataFrame(test_rows), use_container_width=True)
 
-    st.info(f"""
-    **Análisis de la Significancia Estadística:**
-    - **T-Statistic (Magnitud de Tensión):** Este valor representa matemáticamente la diferencia entre el ganador y el perdedor. Un número positivo alto significa que **'{mejor['nombre']}'** supera claramente al contrincante tomando en cuenta la desviación estándar de los resultados.
-    - **P-Value (✅ / ❌):** Se aplicaron dos pruebas rigurosas (T-Test y Wilcoxon). Donde ves un **✅ Sí**, está comprobado con >95% de confianza que la superioridad de **'{mejor['nombre']}'** es real, y no un "golpe de suerte" de la simulación.
-    - **D de Cohen (Efecto en la Vida Real):** Mientras los p-values dicen "existe diferencia", la D de Cohen indica "qué tan grande se sentirá". Un efecto 'Grande' (d > 0.8) implica que implementar **'{mejor['nombre']}'** incrementará drásticamente la conversión en ventas.
-    """)
+            # --- Interpretación dinámica usando solo los valores de ESTA pestaña ---
+            _tab_rows = []
+            for _bn, _t in test_data.items():
+                _abs_d = abs(_t["cohensD"])
+                _tab_rows.append({
+                    "modelo": _bn,
+                    "tStat": _t["ttest"]["tStatistic"],
+                    "pVal_t": _t["ttest"]["pValue"],
+                    "cohensD": _t["cohensD"],
+                    "abs_d": _abs_d,
+                    "sig": _t["ttest"]["significant"] or _t["wilcoxon"]["significant"]
+                })
+
+            _max_t = max(_tab_rows, key=lambda r: r["tStat"])
+            _min_p = min(_tab_rows, key=lambda r: r["pVal_t"])
+            _max_d = max(_tab_rows, key=lambda r: r["abs_d"])
+            _max_d_abs = _max_d["abs_d"]
+            _max_d_mag = "Grande" if _max_d_abs >= 0.8 else ("Medio" if _max_d_abs >= 0.5 else ("Pequeño" if _max_d_abs >= 0.2 else "Despreciable"))
+            _sig_count = sum(1 for r in _tab_rows if r["sig"])
+            _total_count = len(_tab_rows)
+
+            # Descripción del p-value más bajo
+            _p_desc = "(< 0.05 → diferencia real confirmada al 95%)" if _min_p["pVal_t"] < 0.05 else "(≥ 0.05 → no se puede descartar el azar)"
+
+            # Descripción del efecto Cohen's d
+            _d_concl = (
+                f"Esto significa que la ventaja de **{mejor['nombre']}** en **{tab_name}** sería claramente perceptible en producción."
+                if _max_d_abs >= 0.5
+                else "Aun siendo detectable estadísticamente, el impacto práctico en producción es moderado."
+            )
+
+            st.info(f"""
+**📊 Cómo leer los valores de esta tabla ({tab_name}):**
+
+- **T-Statistic** — Mide cuántas desviaciones estándar separa a **{mejor['nombre']}** del modelo comparado en **{tab_name}**.
+  > *En esta tabla:* La mayor diferencia es frente a **{_max_t['modelo']}** con T = **{round(_max_t['tStat'], 4)}**. {"Un valor alto positivo confirma que la ventaja es real, no aleatoria." if _max_t['tStat'] > 2 else "Un valor moderado indica que la diferencia existe pero no es muy pronunciada."}
+
+- **p-value (T-Test y Wilcoxon)** — Probabilidad de que la diferencia observada sea solo azar. Regla: **p < 0.05 → ✅ real**; **p ≥ 0.05 → ❌ posible azar**.
+  > *En esta tabla:* El p-value más bajo es **{round(_min_p['pVal_t'], 4)}** (frente a **{_min_p['modelo']}**) {_p_desc}. **{_sig_count} de {_total_count}** modelos comparados muestran diferencia significativa.
+
+- **Cohen's d** — Mide el tamaño práctico del efecto (no depende del tamaño de muestra). Escala: **< 0.2** Despreciable | **0.2–0.5** Pequeño | **0.5–0.8** Medio | **> 0.8** Grande.
+  > *En esta tabla:* El mayor efecto es frente a **{_max_d['modelo']}** con d = **{round(_max_d['cohensD'], 4)}** → **{_max_d_mag}**. {_d_concl}
+""")
+
+
 
     # 5. Veredicto Final
     st.markdown("---")
