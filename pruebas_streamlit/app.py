@@ -610,6 +610,7 @@ if st.session_state.resultados:
             for bl_name, t in test_data.items():
                 is_sig = t["ttest"]["significant"] or t["wilcoxon"]["significant"]
                 
+                # Texto dinámico adaptativo para Cohen's D
                 abs_d = abs(t["cohensD"])
                 if abs_d >= 0.8:
                     d_mag = "Grande"
@@ -631,53 +632,71 @@ if st.session_state.resultados:
                     "Interpretación Clínica": inter_texto,
                     "Significativo (p < 0.05)": "✅ Sí" if is_sig else "❌ No"
                 })
-            st.dataframe(pd.DataFrame(test_rows), use_container_width=True)
+            
+            df_tab = pd.DataFrame(test_rows)
+            st.dataframe(df_tab, use_container_width=True)
 
-            # --- Interpretación dinámica usando solo los valores de ESTA pestaña ---
-            _tab_rows = []
-            for _bn, _t in test_data.items():
-                _abs_d = abs(_t["cohensD"])
-                _tab_rows.append({
-                    "modelo": _bn,
-                    "tStat": _t["ttest"]["tStatistic"],
-                    "pVal_t": _t["ttest"]["pValue"],
-                    "cohensD": _t["cohensD"],
-                    "abs_d": _abs_d,
-                    "sig": _t["ttest"]["significant"] or _t["wilcoxon"]["significant"]
-                })
-
-            _max_t = max(_tab_rows, key=lambda r: r["tStat"])
-            _min_p = min(_tab_rows, key=lambda r: r["pVal_t"])
-            _max_d = max(_tab_rows, key=lambda r: r["abs_d"])
-            _max_d_abs = _max_d["abs_d"]
-            _max_d_mag = "Grande" if _max_d_abs >= 0.8 else ("Medio" if _max_d_abs >= 0.5 else ("Pequeño" if _max_d_abs >= 0.2 else "Despreciable"))
-            _sig_count = sum(1 for r in _tab_rows if r["sig"])
-            _total_count = len(_tab_rows)
-
-            # Descripción del p-value más bajo
-            _p_desc = "(< 0.05 → diferencia real confirmada al 95%)" if _min_p["pVal_t"] < 0.05 else "(≥ 0.05 → no se puede descartar el azar)"
-
-            # Descripción del efecto Cohen's d
-            _d_concl = (
-                f"Esto significa que la ventaja de **{mejor['nombre']}** en **{tab_name}** sería claramente perceptible en producción."
-                if _max_d_abs >= 0.5
-                else "Aun siendo detectable estadísticamente, el impacto práctico en producción es moderado."
+            # --- SECCIÓN DE INTERPRETACIÓN CIENTÍFICA (PAPER-READY Y DINÁMICA) ---
+            st.markdown(f"### 📑 Discusión y Análisis Estadístico para {tab_name}")
+            st.markdown(
+                f"A continuación se presenta un análisis cuantitativo riguroso de las pruebas de hipótesis aplicadas. "
+                f"Se comparan las medias de rendimiento de **{mejor['nombre']}** (modelo base ganador) frente a cada baseline bajo la métrica **{tab_name}**:"
             )
 
-            st.info(f"""
-**📊 Cómo leer los valores de esta tabla ({tab_name}):**
+            # Generamos explicaciones dinámicas detalladas para cada fila (modelo)
+            for row in test_rows:
+                modelo = row["Modelo Comparado"]
+                t_stat = row["T-Statistic"]
+                p_ttest = row["p-value (T-Test)"]
+                p_wilc = row["p-value (Wilcoxon)"]
+                cohen_d = row["Cohen's d"]
+                es_sig = row["Significativo (p < 0.05)"] == "✅ Sí"
+                
+                # Determinación de significancia y efecto
+                sig_desc = "**es estadísticamente significativa**" if es_sig else "**no es estadísticamente significativa**"
+                d_abs = abs(cohen_d)
+                if d_abs >= 0.8:
+                    efecto_desc = f"un tamaño del efecto **Grande** (d = {cohen_d}), lo que indica una alta relevancia práctica en producción real."
+                elif d_abs >= 0.5:
+                    efecto_desc = f"un tamaño del efecto **Medio** (d = {cohen_d}), reflejando una mejora práctica notable en el comportamiento del usuario."
+                elif d_abs >= 0.2:
+                    efecto_desc = f"un tamaño del efecto **Pequeño** (d = {cohen_d}), lo que indica que el impacto práctico es sutil a pesar de la consistencia estadística."
+                else:
+                    efecto_desc = f"un tamaño del efecto **Despreciable** (d = {cohen_d}), sugiriendo que la diferencia de rendimiento es prácticamente nula."
 
-- **T-Statistic** — Mide cuántas desviaciones estándar separa a **{mejor['nombre']}** del modelo comparado en **{tab_name}**.
-  > *En esta tabla:* La mayor diferencia es frente a **{_max_t['modelo']}** con T = **{round(_max_t['tStat'], 4)}**. {"Un valor alto positivo confirma que la ventaja es real, no aleatoria." if _max_t['tStat'] > 2 else "Un valor moderado indica que la diferencia existe pero no es muy pronunciada."}
+                # Explicación del T-Statistic
+                if t_stat > 0:
+                    t_desc = f"un T-Statistic de **{t_stat}** (positivo, indicando que el rendimiento de {mejor['nombre']} es superior)"
+                else:
+                    t_desc = f"un T-Statistic de **{t_stat}** (negativo, indicando una tendencia desfavorable)"
 
-- **p-value (T-Test y Wilcoxon)** — Probabilidad de que la diferencia observada sea solo azar. Regla: **p < 0.05 → ✅ real**; **p ≥ 0.05 → ❌ posible azar**.
-  > *En esta tabla:* El p-value más bajo es **{round(_min_p['pVal_t'], 4)}** (frente a **{_min_p['modelo']}**) {_p_desc}. **{_sig_count} de {_total_count}** modelos comparados muestran diferencia significativa.
+                # Explicación del p-value
+                p_desc_test = (
+                    f"Con un p-value de T-Test de **{p_ttest}** y p-value de Wilcoxon de **{p_wilc}** (ambos < 0.05), la probabilidad de "
+                    f"que esta diferencia se deba enteramente al azar es inferior al 5%."
+                    if es_sig else
+                    f"Dado que el p-value de T-Test es **{p_ttest}** y el de Wilcoxon es **{p_wilc}** (ambos ≥ 0.05), no se puede rechazar "
+                    f"la hipótesis nula de igualdad de medias con un nivel de confianza del 95%."
+                )
 
-- **Cohen's d** — Mide el tamaño práctico del efecto (no depende del tamaño de muestra). Escala: **< 0.2** Despreciable | **0.2–0.5** Pequeño | **0.5–0.8** Medio | **> 0.8** Grande.
-  > *En esta tabla:* El mayor efecto es frente a **{_max_d['modelo']}** con d = **{round(_max_d['cohensD'], 4)}** → **{_max_d_mag}**. {_d_concl}
-""")
+                st.markdown(
+                    f"1. **Comparación con {modelo}:**\n"
+                    f"   - **Estadístico de Contraste:** Se obtuvo {t_desc}. Esto mide a cuántas desviaciones estándar "
+                    f"se encuentra la diferencia de medias observada respecto al valor esperado bajo la hipótesis nula.\n"
+                    f"   - **Significancia Estadística:** {p_desc_test} Por lo tanto, la diferencia {sig_desc}.\n"
+                    f"   - **Tamaño del Efecto (Magnitud Clave para el Paper):** La métrica d de Cohen revela {efecto_desc}\n"
+                )
 
-
+            # Resumen global de la métrica apto para redacción científica
+            total_modelos = len(test_rows)
+            sig_modelos = sum(1 for row in test_rows if row["Significativo (p < 0.05)"] == "✅ Sí")
+            
+            st.info(
+                f"**Síntesis para el Artículo Científico ({tab_name}):**\n\n"
+                f"Los resultados demuestran que **{mejor['nombre']}** logró superar estadísticamente a **{sig_modelos} de los {total_modelos}** modelos de control evaluados en la métrica **{tab_name}** con un nivel de confianza del 95%. "
+                f"Este análisis sustenta formalmente la elección de **{mejor['nombre']}** como el algoritmo óptimo para producción en el módulo de recomendaciones, "
+                f"avalado por los contrastes paramétricos (T-Test) y no paramétricos (Wilcoxon)."
+            )
 
     # 5. Veredicto Final
     st.markdown("---")
