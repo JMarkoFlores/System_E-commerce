@@ -9,24 +9,24 @@ Tienda e-commerce con sistema de recomendación basado en Inteligencia Artificia
 
 ## 📚 Stack Tecnológico
 
-| Capa | Tecnología | Versión |
-|------|------------|---------|
-| Frontend | React | 18.2.0 |
-| Routing | React Router DOM | 6.x / 7.x |
-| Build tool | Vite | 4.3.9 |
-| Estilos | Tailwind CSS | 3.3.2 |
-| HTTP Client | Axios | ^1.x |
-| IA (frontend) | TensorFlow.js | 4.22.0 |
-| Gráficas | Recharts | 3.6.0 |
-| Iconos | Lucide React | 0.263.1 |
-| Reportes PDF | jsPDF + jspdf-autotable | ^4.x / ^5.x |
-| Reportes Excel | xlsx (SheetJS) | ^0.18 |
-| Backend | FastAPI | 0.115.0 |
-| Servidor ASGI | Uvicorn | 0.30.6 |
-| ORM | SQLAlchemy | 2.0.35 |
-| Validación | Pydantic | 2.9.2 |
-| Auth | JWT (python-jose) + bcrypt | 3.3.0 / 4.1.2 |
-| Base de datos | SQLite | — |
+| Capa           | Tecnología                 | Versión       |
+| -------------- | -------------------------- | ------------- |
+| Frontend       | React                      | 18.2.0        |
+| Routing        | React Router DOM           | 6.x / 7.x     |
+| Build tool     | Vite                       | 4.3.9         |
+| Estilos        | Tailwind CSS               | 3.3.2         |
+| HTTP Client    | Axios                      | ^1.x          |
+| IA (frontend)  | TensorFlow.js              | 4.22.0        |
+| Gráficas       | Recharts                   | 3.6.0         |
+| Iconos         | Lucide React               | 0.263.1       |
+| Reportes PDF   | jsPDF + jspdf-autotable    | ^4.x / ^5.x   |
+| Reportes Excel | xlsx (SheetJS)             | ^0.18         |
+| Backend        | FastAPI                    | 0.115.0       |
+| Servidor ASGI  | Uvicorn                    | 0.30.6        |
+| ORM            | SQLAlchemy                 | 2.0.35        |
+| Validación     | Pydantic                   | 2.9.2         |
+| Auth           | JWT (python-jose) + bcrypt | 3.3.0 / 4.1.2 |
+| Base de datos  | SQLite                     | —             |
 
 ---
 
@@ -59,27 +59,15 @@ El backend utiliza un entorno virtual de Python.
 ```bash
 cd backend
 python -m venv venv
-
-# Windows PowerShell
-.\venv\Scripts\pip.exe install -r requirements.txt
-
-# Windows CMD
-# venv\Scripts\pip.exe install -r requirements.txt
-```
-
-Levantar el servidor backend:
-
-```bash
-# Windows PowerShell
+venv\Scripts\activate
+pip install -r requirements.txt
 .\venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
-
-# Windows CMD
-# venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
 ```
 
 El backend quedará disponible en `http://localhost:8000`.
 
 > **Nota:** Si el puerto 8000 está ocupado, usa otro puerto (por ejemplo `--port 8001`). Si cambias el puerto, crea un archivo `.env` en la raíz del proyecto con:
+>
 > ```
 > VITE_API_URL=http://localhost:8001
 > ```
@@ -148,12 +136,11 @@ cd backend
 
 ```bash
 cd pruebas_streamlit
-# Instalar dependencias requeridas (una vez)
+py -3.11 -m venv venv
+venv\Scripts\activate
 pip install -r requirements.txt
-# Ejecutar módulo
 streamlit run app.py
 ```
-
 
 ---
 
