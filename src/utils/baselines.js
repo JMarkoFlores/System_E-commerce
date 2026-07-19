@@ -184,9 +184,106 @@ export class CategoryFavoriteRecommender {
   }
 }
 
+/**
+ * Recomendador Híbrido Ponderado.
+ * Combina Popularidad y Content-Based con pesos.
+ */
+export class HybridWeightedRecommender {
+  constructor() {
+    this.popRecommender = new PopularityRecommender();
+    this.cbRecommender = new ContentBasedRecommender();
+  }
+
+  async recomendar(historialTrain, n = 10) {
+    const compradosIds = new Set(historialTrain.map((h) => h.id));
+    
+    // Obtenemos todos los scores
+    const cbPerfil = this.cbRecommender.perfilUsuario(historialTrain);
+    const cbScores = new Map();
+    PRODUCTOS.forEach((p) => {
+        if (!compradosIds.has(p.id)) {
+            cbScores.set(p.id, this.cbRecommender.similitudCoseno(cbPerfil, this.cbRecommender.vectores.get(p.id)));
+        }
+    });
+
+    const popScores = new Map();
+    this.popRecommender.popularidad.forEach((item) => {
+        if (!compradosIds.has(item.producto.id)) {
+            popScores.set(item.producto.id, item.score);
+        }
+    });
+
+    // Normalizar popScores al rango [0, 1] aprox para comparar con coseno que es [0, 1]
+    let maxPop = 0;
+    for (let s of popScores.values()) {
+        if (s > maxPop) maxPop = s;
+    }
+    
+    const hibrido = [];
+    for (let [id, cbScore] of cbScores.entries()) {
+        const popScore = maxPop > 0 ? (popScores.get(id) || 0) / maxPop : 0;
+        // Peso 70% contenido, 30% popularidad
+        const score = (cbScore * 0.7) + (popScore * 0.3);
+        const producto = PRODUCTOS.find(p => p.id === id);
+        hibrido.push({ producto, score });
+    }
+
+    return hibrido.sort((a, b) => b.score - a.score).slice(0, n).map(h => h.producto);
+  }
+
+  async reiniciar() {
+    await this.popRecommender.reiniciar();
+    await this.cbRecommender.reiniciar();
+  }
+}
+
+/**
+ * Recomendador Híbrido en Cascada.
+ * Filtra primero por las categorías compradas por el usuario,
+ * luego reordena usando popularidad.
+ */
+export class HybridCascadeRecommender {
+  constructor() {
+    this.popRecommender = new PopularityRecommender();
+  }
+  
+  async recomendar(historialTrain, n = 10) {
+    const compradosIds = new Set(historialTrain.map((h) => h.id));
+    if (historialTrain.length === 0) {
+        return PRODUCTOS.slice(0, n);
+    }
+
+    // Paso 1: Filtro Colaborativo/Reglas - Obtener categorías del historial
+    const categoriasInteres = new Set(historialTrain.map((h) => h.categoria));
+    
+    // Paso 2: Filtrar catálogo
+    let candidatos = PRODUCTOS.filter((p) => 
+        categoriasInteres.has(p.categoria) && !compradosIds.has(p.id)
+    );
+
+    // Si hay muy pocos candidatos, rellenar con otros productos
+    if (candidatos.length < n) {
+        const otros = PRODUCTOS.filter((p) => !categoriasInteres.has(p.categoria) && !compradosIds.has(p.id));
+        candidatos = [...candidatos, ...otros];
+    }
+
+    // Paso 3: Reordenar usando popularidad
+    const popMap = new Map();
+    this.popRecommender.popularidad.forEach((item) => popMap.set(item.producto.id, item.score));
+
+    return candidatos.sort((a, b) => (popMap.get(b.id) || 0) - (popMap.get(a.id) || 0)).slice(0, n);
+  }
+
+  async reiniciar() {
+    await this.popRecommender.reiniciar();
+  }
+}
+
 export default {
   RandomRecommender,
   PopularityRecommender,
   ContentBasedRecommender,
   CategoryFavoriteRecommender,
+  HybridWeightedRecommender,
+  HybridCascadeRecommender,
 };

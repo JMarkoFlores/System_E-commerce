@@ -18,3 +18,8 @@ thumb
 sketch
 
 # End of https://www.toptal.com/developers/gitignore/api/react
+
+# Ignorados específicos
+RequisitosPruebas.md
+RequisitosPruebas1.md
+RequisitosPruebas2.md
