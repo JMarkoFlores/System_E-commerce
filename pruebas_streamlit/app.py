@@ -329,7 +329,10 @@ if run_btn:
                 _pdf.set_text_color(50, 50, 50)
                 for _i, _s in enumerate(_top3):
                     _row = _tbl.row()
-                    _pdf.set_fill_color(245, 245, 250) if _i % 2 == 0 else _pdf.set_fill_color(255, 255, 255)
+                    if _i % 2 == 0:
+                        _pdf.set_fill_color(245, 245, 250)
+                    else:
+                        _pdf.set_fill_color(255, 255, 255)
                     _mr = _s["res"]
                     _row.cell(_s["nombre"])
                     _row.cell(f"{round(_mr['hitRate'],2)}%")
@@ -340,7 +343,17 @@ if run_btn:
             if len(_top3) > 1:
                 _pdf.set_font("Helvetica", size=10)
                 _pdf.set_text_color(60, 60, 60)
-                _pdf.multi_cell(0, 5, txt=f"'{_top3[0]['nombre']}' lidera con {round(_top3[0]['score'],2)}/100, superando a '{_top3[1]['nombre']}' por {round(_top3[0]['score']-_top3[1]['score'],2)} pts.")
+                _diff_score = _top3[0]['score'] - _top3[1]['score']
+                _dominio = "con un margen notable" if _diff_score >= 5 else "por un margen estrecho"
+                _texto_tabla = (
+                    f"Interpretacion de la Tabla:\n"
+                    f"- El modelo '{_top3[0]['nombre']}' lidera {_dominio} ({round(_diff_score, 2)} pts de diferencia sobre '{_top3[1]['nombre']}').\n"
+                    f"- '{_top3[0]['nombre']}' destaca con un Hit Rate de {round(_top3[0]['res']['hitRate'], 2)}% y un NDCG de {round(_top3[0]['res']['ndcg'], 2)}%.\n"
+                )
+                if _top3[1]['res']['precision'] > _top3[0]['res']['precision']:
+                    _texto_tabla += f"- Sin embargo, '{_top3[1]['nombre']}' logra una mayor Precision ({round(_top3[1]['res']['precision'], 2)}%)."
+                _pdf.multi_cell(0, 5, txt=_texto_tabla)
+
             _pdf.ln(8)
             _pdf.set_font("Helvetica", "B", 14)
             _pdf.set_text_color(30, 30, 30)
@@ -356,6 +369,24 @@ if run_btn:
                 _pdf.set_y(_y_before + 65)
                 os.remove(_tmp_bar_pdf)
                 os.remove(_tmp_rad_pdf)
+
+                _pdf.set_font("Helvetica", size=10)
+                _pdf.set_text_color(60, 60, 60)
+                _mejor_prec = max(_scores, key=lambda x: x['res']['precision'])
+                _mejor_cov = max(_scores, key=lambda x: x['res'].get('coverage', 0))
+                
+                _texto_graficas = "Interpretacion de Graficas:\n"
+                _texto_graficas += f"- El grafico de barras muestra la consistencia de '{_top3[0]['nombre']}' en la mayoria de metricas"
+                if _mejor_prec['nombre'] != _top3[0]['nombre']:
+                    _texto_graficas += f", aunque resalta '{_mejor_prec['nombre']}' en Precision maxima.\n"
+                else:
+                    _texto_graficas += ".\n"
+                
+                _texto_graficas += f"- El perfil de radar ilustra el balance de los modelos. "
+                if 'coverage' in _mejor_cov['res']:
+                    _texto_graficas += f"Se observa que '{_mejor_cov['nombre']}' explora una mayor proporcion del catalogo (Coverage)."
+                
+                _pdf.multi_cell(0, 5, txt=_texto_graficas)
             except Exception:
                 _pdf.set_font("Helvetica", "I", 10)
                 _pdf.set_text_color(180, 0, 0)
@@ -366,7 +397,12 @@ if run_btn:
             _pdf.cell(0, 10, txt="Conclusion", ln=1)
             _pdf.set_font("Helvetica", size=10)
             _pdf.set_text_color(60, 60, 60)
-            _pdf.multi_cell(0, 6, txt=f"El modelo '{_mejor['nombre']}' obtuvo score {round(_mejor['score'],2)}/100, Hit Rate {round(_mejor['res']['hitRate'],2)}%, Precision {round(_mejor['res']['precision'],2)}%, NDCG {round(_mejor['res']['ndcg'],2)}%, F1 {round(_mejor['res']['f1'],2)}%.")
+            _texto_conclusion = (
+                f"Tras evaluar {len(_scores)} modelos, '{_mejor['nombre']}' es la opcion recomendada "
+                f"con un score final de {round(_mejor['score'],2)}/100, alcanzando un Hit Rate del {round(_mejor['res']['hitRate'],2)}% "
+                f"y una Precision del {round(_mejor['res']['precision'],2)}%."
+            )
+            _pdf.multi_cell(0, 6, txt=_texto_conclusion)
             st.session_state.pdf_bytes = bytes(_pdf.output())
         except Exception as _e:
             st.session_state.pdf_bytes = None
@@ -424,6 +460,24 @@ if run_btn:
                     _cl=_tm.cell(_i+1,_j+1); _cl.text=f"{round(_val,4)}"
                     if _val==_mv: _set_cell_bg(_cl,"DCFCE7")
             _doc.add_paragraph()
+            _doc.add_paragraph()
+            _doc.add_heading("Analisis Detallado por Metrica", level=2)
+            
+            _mejor_hr = max(_scores, key=lambda x: x['res']['hitRate'])
+            _doc.add_paragraph(f"- Atraccion (Hit Rate@K): '{_mejor_hr['nombre']}' es el mas efectivo para captar la atencion primaria, logrando que un {round(_mejor_hr['res']['hitRate'], 2)}% de los usuarios encuentren al menos un producto relevante en sus recomendaciones.")
+            
+            _mejor_prec = max(_scores, key=lambda x: x['res']['precision'])
+            _doc.add_paragraph(f"- Exactitud (Precision@K): '{_mejor_prec['nombre']}' es el modelo mas preciso ({round(_mejor_prec['res']['precision'], 2)}%), lo que significa que de los productos que sugiere, un mayor porcentaje resulta en compras reales, minimizando recomendaciones inutiles.")
+            
+            _mejor_rec = max(_scores, key=lambda x: x['res']['recall'])
+            _doc.add_paragraph(f"- Retencion (Recall@K): En cuanto a recuperar todo lo que el usuario queria comprar, '{_mejor_rec['nombre']}' lidera con {round(_mejor_rec['res']['recall'], 2)}%, asegurando que menos productos de interes pasen desapercibidos.")
+            
+            _mejor_ndcg = max(_scores, key=lambda x: x['res']['ndcg'])
+            _doc.add_paragraph(f"- Calidad del Ranking (NDCG@K): '{_mejor_ndcg['nombre']}' es el que mejor ordena los productos (NDCG: {round(_mejor_ndcg['res']['ndcg'], 2)}%), colocando las opciones mas atractivas en las primeras posiciones del carrusel.")
+            
+            _mejor_f1 = max(_scores, key=lambda x: x['res']['f1'])
+            _doc.add_paragraph(f"- Balance Global (F1@K): Combinando exactitud y retencion, '{_mejor_f1['nombre']}' ofrece el perfil mas equilibrado con un F1 de {round(_mejor_f1['res']['f1'], 2)}%.")
+            _doc.add_paragraph()
 
             _doc.add_heading("3. Ranking de Modelos", level=1)
             _tr=_doc.add_table(rows=len(_scores)+1,cols=3); _tr.style="Table Grid"
@@ -453,7 +507,12 @@ if run_btn:
                 _doc.add_paragraph()
 
             _doc.add_heading("5. Conclusion", level=1)
-            _doc.add_paragraph(f"El modelo '{_mejor['nombre']}' obtuvo {round(_mejor['score'],2)}/100, Hit Rate {round(_mejor['res']['hitRate'],2)}%, Precision {round(_mejor['res']['precision'],2)}%, NDCG {round(_mejor['res']['ndcg'],2)}%, F1 {round(_mejor['res']['f1'],2)}%.")
+            _texto_conclusion_w = (
+                f"Tras evaluar {len(_scores)} modelos, '{_mejor['nombre']}' es la opcion recomendada "
+                f"con un score final de {round(_mejor['score'],2)}/100, alcanzando un Hit Rate del {round(_mejor['res']['hitRate'],2)}% "
+                f"y una Precision del {round(_mejor['res']['precision'],2)}%."
+            )
+            _doc.add_paragraph(_texto_conclusion_w)
             _wb2 = io.BytesIO()
             _doc.save(_wb2)
             st.session_state.word_data = _wb2.getvalue()
